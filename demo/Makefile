@@ -8,4 +8,3 @@ $@.c: $@.c
 
 clean:
 	rm ../bin/*
-
