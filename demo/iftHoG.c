@@ -7,11 +7,15 @@
 int main() {
 
     iftImage* img = iftReadImageByExt("lena.pgm");
+
     iftAdjRel *A = iftCircular(1.0);
     iftImage* norm_img = iftNormalizeImage(img, A, 4095);
 
-    createImgHoG(img);
+    iftDestroyImage(&img);
+    iftDestroyAdjRel(&A);
+
+    genereteHoG(norm_img, 2, 128, 128, 1);
 
     iftDestroyImage(&norm_img);
-    iftDestroyImage(&img);
+    //destroyHoGDesc(hog);
 }

@@ -1,23 +1,58 @@
 #include "ift.h"
 #include <math.h>
 
-typedef struct img_hog {
+typedef struct img_gauss {
     iftImage *mag;
     iftMatrix *orient;
-}imgHoG;
+}imgGauss;
 
 typedef struct hog_desc {
     float *hist;
-    int size_hist;
+    int sizeHist;
 	int numDirect;    
 } HoGDesc;
 
 typedef struct block {
-	int num_cels;
-	int xsize_cels;
-	int ysize_cels;
+	int numCels;
+	int xsizeCels;
+	int ysizeCels;
 	HoGDesc *hogs;
 } Block;
+
+
+HoGDesc* createHoGDesc(int sizeHist, int numDirect) {
+    float* hist = (float *) malloc(sizeHist*sizeof(float));
+
+    HoGDesc* hog = (HoGDesc *) malloc(sizeof(HoGDesc));
+    hog->sizeHist = sizeHist;
+    hog->numDirect = numDirect;
+    hog->hist = hist;
+
+    for (int i = 0; i < sizeHist; i++)
+        hog->hist[i] = 0;
+
+    return hog;
+}
+
+void destroyHoGDesc(HoGDesc* hog){
+    free(hog->hist);
+    free(hog);
+}
+
+Block* createBlock(int xsizeCels, int ysizeCels, int numCels) {
+    Block* block = (Block *) malloc(sizeof(Block));
+    block->numCels = numCels;
+    block->xsizeCels = xsizeCels;
+    block->ysizeCels = ysizeCels;
+    block->hogs = createHoGDesc(9*numCels, 9);
+
+    return block;
+}
+
+void destroyBlock(Block* block) {
+    destroyHoGDesc(block->hogs);
+    free(block);
+}
 
 iftImage* cutImg(iftImage *img, int pos_x, int pos_y, int width, int height) {
 
@@ -60,13 +95,13 @@ iftImage* imgConv(iftImage *img, char *filename) {
         newImg->val[p] = s/adj->n;
     }
 
-    iftPrintMatrix(matrix);
     iftDestroyMatrix(&matrix);
+    iftDestroyAdjRel(&adj);
     
     return newImg;
 }
 
-imgHoG* createImgHoG(iftImage *img) {
+imgGauss* createImgGauss(iftImage *img) {
     double gx, gy, res;
 
     iftImage* gaussx = imgConv(img, "gauss_x");
@@ -75,17 +110,17 @@ imgHoG* createImgHoG(iftImage *img) {
 
     iftMatrix* orient = iftCreateMatrix(img->xsize, img->ysize);
 
-    printf("%d\n", (2 == 1) ? abs(-10) : -10);
-
     for (int p = 0; p < gauss->n; ++p) {
 
-        gx = (gauss->val[p] != 0) ? gaussx->val[p]/abs(gauss->val[p]) : 0;
-        gy = (gauss->val[p] != 0) ? gaussy->val[p]/abs(gauss->val[p]) : 0;
+        gx = (gauss->val[p] != 0) ? gaussx->val[p]/gauss->val[p] : 0;
+        gy = (gauss->val[p] != 0) ? gaussy->val[p]/gauss->val[p] : 0;
 
-        res = (180/PI);
+        res = (180/PI)*acos(gx);
         if (gy < 0){
             res = 360 - res;
         }
+
+        //printf("%f, %f, %f \n", gx, gy, res/45);
 
         orient->val[p] = res;
 
@@ -95,16 +130,33 @@ imgHoG* createImgHoG(iftImage *img) {
     iftDestroyImage(&gaussx);
 
 
-    imgHoG* hogs = (imgHoG *) malloc(sizeof(imgHoG));
-    hogs->mag = gauss;
-    hogs->orient = orient;
+    imgGauss* igauss = (imgGauss *) malloc(sizeof(imgGauss));
+    igauss->mag = gauss;
+    igauss->orient = orient;
 
-    return hogs;
+    return igauss;
 }
 
-void destroyImgHoG(imgHoG* imghog) {
-    iftDestroyImage(&(imghog->mag));
-    iftDestroyMatrix(&(imghog->orient));
+void destroyImgGauss(imgGauss* igauss) {
+    iftDestroyImage(&(igauss->mag));
+    iftDestroyMatrix(&(igauss->orient));
 
-    free(imghog);
+    free(igauss);
+}
+
+void genereteHoG(iftImage* img, int cels, int xsizeCels, int ysizeCels, int step) {
+    int numCelsW = img->xsize/xsizeCels, numCelsH = img->ysize/ysizeCels,
+    numBlockW = numCelsW - (cels-step), numBlockH = numCelsH - (cels-step),
+    hist_size = cels*cels* 9 * numBlockW * numBlockH;
+    iftImage *cutimg;
+    int x, y, sizexWindow, sizeyWindow;
+
+    for (int i = 0; i < numBlockW; i++) {
+        for (int j = 0; j < numBlockH; j++) {
+            x = i*step*xsizeCels; y = j*step*ysizeCels;
+            cutimg = cutImg(img, x, y, cels*sizexWindow, cels*sizeyWindow);
+            iftDestroyImage(&cutimg);
+        }
+    }
+
 }
