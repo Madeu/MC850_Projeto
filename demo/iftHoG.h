@@ -111,7 +111,7 @@ imgGauss* createImgGauss(iftImage *img) {
     iftMatrix* orient = iftCreateMatrix(img->xsize, img->ysize);
 
     for (int p = 0; p < gauss->n; ++p) {
-
+        //TODO: rever Calculo gaussiana
         gx = (gauss->val[p] != 0) ? gaussx->val[p]/gauss->val[p] : 0;
         gy = (gauss->val[p] != 0) ? gaussy->val[p]/gauss->val[p] : 0;
 
@@ -120,7 +120,7 @@ imgGauss* createImgGauss(iftImage *img) {
             res = 360 - res;
         }
 
-        //printf("%f, %f, %f \n", gx, gy, res/45);
+        //printf("%f, %f, %f \n", gx, gy, res);
 
         orient->val[p] = res;
 
@@ -144,19 +144,46 @@ void destroyImgGauss(imgGauss* igauss) {
     free(igauss);
 }
 
-void genereteHoG(iftImage* img, int cels, int xsizeCels, int ysizeCels, int step) {
-    int numCelsW = img->xsize/xsizeCels, numCelsH = img->ysize/ysizeCels,
-    numBlockW = numCelsW - (cels-step), numBlockH = numCelsH - (cels-step),
-    hist_size = cels*cels* 9 * numBlockW * numBlockH;
-    iftImage *cutimg;
-    int x, y, sizexWindow, sizeyWindow;
-
-    for (int i = 0; i < numBlockW; i++) {
-        for (int j = 0; j < numBlockH; j++) {
-            x = i*step*xsizeCels; y = j*step*ysizeCels;
-            cutimg = cutImg(img, x, y, cels*sizexWindow, cels*sizeyWindow);
-            iftDestroyImage(&cutimg);
+HoGDesc* getHistogram(iftImage* img, int cels, int celsizex, int celsizey) {
+    int imgNum = cels*cels, sizeHist = cels*cels*9;
+    imgGauss* igauss = createImgGauss(img);
+    HoGDesc* hog = createHoGDesc(9*imgNum, 9) ;
+    
+    for(int k = 0; k < imgNum; k++) {
+        int x = k%cels; int y = k/cels;
+        for (int i = x*celsizex; i < (x+1)*celsizex; i++) {
+            for (int j = y*celsizey; j < (y+1)*celsizey; j++) {
+                //TODO : Interpolação.
+                int p = iftGetMatrixIndex(igauss->orient, i, j);
+                int t = (int) floor((igauss->orient->val[p])/45);
+                hog->hist[9*k + (abs(t) < 9 ? t : 8)] ++;
+            }
         }
     }
 
+    destroyImgGauss(igauss);
+    return hog;
+}
+
+HoGDesc* generateHoG(iftImage* img, int cels, int celsizex, int celsizey, int step) {
+    int blockSize = cels*cels, numCelsW = img->xsize/celsizex, numCelsH = img->ysize/celsizey;
+    HoGDesc* hogRes = createHoGDesc(9*blockSize*(numCelsW - (cels-step))*(numCelsH - (cels-step)), 9);
+
+    for (int i = 0; i < numCelsW - (cels-step); i+=step) {
+        for (int j = 0; j < numCelsH - (cels-step); j+=step) {
+            int x = i*celsizex; int y = j*celsizey;
+            iftImage* cut = cutImg(img, x, y, x+(cels*celsizex), y+(cels*celsizey));
+            HoGDesc* hog = getHistogram(cut, cels, celsizex, celsizey);
+
+            int posHist = (9*blockSize)*(i*(numCelsH - (cels-step))+j);
+            for (int t = 0; t < 9*blockSize; t++) {
+                hogRes->hist[posHist + i] = hog->hist[i];
+            }
+
+            destroyHoGDesc(hog);
+            iftDestroyImage(&cut);
+        }
+    }
+
+    return hogRes;
 }
