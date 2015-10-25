@@ -19,6 +19,9 @@ typedef struct block {
 	HoGDesc *hogs;
 } Block;
 
+double distPoint(int xA, int yA, int xB, int yB) {
+    return sqrt(pow((xA - xB), 2) + pow((yA - yB), 2));
+}
 
 HoGDesc* createHoGDesc(int sizeHist, int numDirect) {
     float* hist = (float *) malloc(sizeHist*sizeof(float));
@@ -74,13 +77,13 @@ iftImage* cutImg(iftImage *img, int pos_x, int pos_y, int width, int height) {
     return newImg;
 }
 
-iftImage* imgConv(iftImage *img, char *filename) {
+iftMatrix* imgConv(iftImage *img, char *filename) {
 
     iftMatrix* matrix = iftReadMatrix(filename);
     
     iftAdjRel* adj = iftRectangular(matrix->ncols, matrix->nrows);
 
-    iftImage* newImg = iftCreateImage(img->xsize, img->ysize, img->zsize);
+    iftMatrix* newImg = iftCreateMatrix(img->xsize, img->ysize);
 
     for (int p = 0; p < img->n; ++p) {//foreach pixel in the image
         iftVoxel v = iftGetVoxelCoord(img, p);//gets the multidimensional coordinate using the unidimensional index
@@ -101,37 +104,54 @@ iftImage* imgConv(iftImage *img, char *filename) {
     return newImg;
 }
 
+iftMatrix* addMatrix(iftMatrix* matrixA, iftMatrix* matrixB) {
+    iftMatrix* matrix = iftCreateMatrix(matrixA->ncols, matrixA->nrows);
+
+    for (int i = 0; i < matrix->n; i++)
+        matrix->val[i] = matrixA->val[i] + matrixB->val[i];
+
+    return matrix;
+}
+
+iftImage* matrixToImg(iftMatrix* matrix) {
+    iftImage* img = iftCreateImage(matrix->ncols, matrix->nrows, 0);
+
+    for (int i = 0; i < img->n; i++)
+        img->val[i] = (int) matrix->val[i];
+
+    return img;
+}
+
 imgGauss* createImgGauss(iftImage *img) {
     double gx, gy, res;
 
-    iftImage* gaussx = imgConv(img, "gauss_x");
-    iftImage* gaussy = imgConv(img, "gauss_y");
-    iftImage* gauss = iftAdd(gaussx, gaussy);
+    iftMatrix* gaussx = imgConv(img, "gauss_x");
+    iftMatrix* gaussy = imgConv(img, "gauss_y");
 
     iftMatrix* orient = iftCreateMatrix(img->xsize, img->ysize);
 
-    for (int p = 0; p < gauss->n; ++p) {
-        //TODO: rever Calculo gaussiana
-        gx = (gauss->val[p] != 0) ? gaussx->val[p]/gauss->val[p] : 0;
-        gy = (gauss->val[p] != 0) ? gaussy->val[p]/gauss->val[p] : 0;
+    for (int p = 0; p < orient->n; p++){
 
-        res = (180/PI)*acos(gx);
-        if (gy < 0){
+        double mag = gaussx->val[p] + gaussy->val[p];
+        double gx = gaussx->val[p]/mag;
+        double gy = gaussy->val[p]/mag;
+        double res = (180/PI)*acos(gx);
+
+        if(gy < 0) {
             res = 360 - res;
         }
 
-        //printf("%f, %f, %f \n", gx, gy, res);
-
         orient->val[p] = res;
-
     }
 
-    iftDestroyImage(&gaussx);
-    iftDestroyImage(&gaussx);
-
+    iftMatrix* gauss = addMatrix(gaussx, gaussy);
+    iftImage* gauss_img = matrixToImg(gauss);
+    iftDestroyMatrix(&gaussx);
+    iftDestroyMatrix(&gaussx);
+    iftDestroyMatrix(&gauss);
 
     imgGauss* igauss = (imgGauss *) malloc(sizeof(imgGauss));
-    igauss->mag = gauss;
+    igauss->mag = gauss_img;
     igauss->orient = orient;
 
     return igauss;
