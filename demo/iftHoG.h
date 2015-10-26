@@ -164,6 +164,21 @@ void destroyImgGauss(imgGauss* igauss) {
     free(igauss);
 }
 
+void interpolHist(HoGDesc* hist, imgGauss* hog, int cels, int xsize, int ysize, int px, int py){
+    int p = iftGetMatrixIndex(hog->orient, px, py), block = px/xsize + cels*py/ysize;
+    double bin = (hog->orient->val[p]/45 < 9)?hog->orient->val[p]/45 : 8;
+    int dceil = ceil(bin), dfloor = floor(bin), direct = hist->numDirect;
+    
+    hist->hist[dceil + direct*block] = (bin-dfloor); hist->hist[dfloor + direct*block] = (dceil - bin);
+
+    for(int k = 0; k < (cels*cels); k++) {
+        int x = k%cels; int y = k/cels;
+        int centerx = ceil(xsize/cels)+(x*xsize), centery = ceil(ysize/cels)+(y*ysize);
+        double dist = distPoint(px, py, centerx, centery);
+        hist->hist[((int)dceil)+(k*direct)] = (bin-dfloor)/dist; hist->hist[((int)dfloor)+(k*direct)] = (dceil - bin)/dist;
+    }
+}
+
 HoGDesc* getHistogram(iftImage* img, int cels, int celsizex, int celsizey) {
     int imgNum = cels*cels, sizeHist = cels*cels*9;
     imgGauss* igauss = createImgGauss(img);
@@ -173,10 +188,7 @@ HoGDesc* getHistogram(iftImage* img, int cels, int celsizex, int celsizey) {
         int x = k%cels; int y = k/cels;
         for (int i = x*celsizex; i < (x+1)*celsizex; i++) {
             for (int j = y*celsizey; j < (y+1)*celsizey; j++) {
-                //TODO : Interpolação.
-                int p = iftGetMatrixIndex(igauss->orient, i, j);
-                int t = (int) floor((igauss->orient->val[p])/45);
-                hog->hist[9*k + (abs(t) < 9 ? t : 8)] ++;
+                interpolHist(hog, igauss, cels, celsizex, celsizey, 0, 0);
             }
         }
     }

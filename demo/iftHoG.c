@@ -14,21 +14,14 @@ int main() {
     iftDestroyImage(&img);
     iftDestroyAdjRel(&A);
 
-    iftImage* cut = cutImg(norm_img, 200, 200, 10, 10);
+    HoGDesc* hog = generateHoG(norm_img, 2, 32, 32, 1);
 
-    imgGauss* hog = createImgGauss(cut);
-    iftPrintMatrix(hog->orient);
-
-    for(int k = 0; k < 4; k++) {
-        int x = k%2; int y = k/2;
-        double centerx = ceil(5.0/2.0)+(x*5), centery = ceil(5.0/2.0)+(y*5);
-        int p = iftGetMatrixIndex(hog->orient, 0, 0);
-        printf("%lf\n", ceil(hog->orient->val[p]/45));
+    for (int i = 0; i < hog->sizeHist; i++) {
+        printf("%lf ", hog->hist[i]);
     }
 
-    iftPrintMatrix(hog->orient);
+    putchar('\n');
 
     iftDestroyImage(&norm_img);
-    destroyImgGauss(hog);
-    iftDestroyImage(&cut);
+    destroyHoGDesc(hog);
 }
