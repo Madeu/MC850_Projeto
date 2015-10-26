@@ -14,7 +14,7 @@ int main() {
     iftDestroyImage(&img);
     iftDestroyAdjRel(&A);
 
-    HoGDesc* hog = generateHoG(norm_img, 2, 32, 32, 1);
+    HoGDesc* hog = generateHoG(norm_img, 2, 128, 128, 1);
 
     for (int i = 0; i < hog->sizeHist; i++) {
         printf("%lf ", hog->hist[i]);
