@@ -5,16 +5,16 @@
 
 int main() {
 	
-	//iftDataSet* dataSet = iftReadXYDataSet("points");
+	iftDataSet* dataSet = iftReadXYDataSet("points");
 
-	// iftDataSet* centers = iftKmeansInitCentroidsFromSamples(dataSet, 2);
+	iftDataSet* centers = iftKmeansInitCentroidsFromSamples(dataSet, 2);
 
-	// iftKmeansRun(2, dataSet, &centers, )
+	iftKmeansRun(0, dataSet, &centers, MAX_INTERATION, EPSILON);
 
-	// iftDraw2DFeatureSpace(centers, 0, 0, MAX_INTERATION, EPSILON);
+	iftDraw2DFeatureSpace(centers, 0, 0);
 
-	//iftDestroyDataSet(&dataSet);
-	// iftDestroyDataSet(&centers);
+	iftDestroyDataSet(&dataSet);
+	iftDestroyDataSet(&centers);
 
 	return 0;
 }
