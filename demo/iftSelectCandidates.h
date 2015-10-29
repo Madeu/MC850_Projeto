@@ -392,7 +392,7 @@ iftImage *selectCandidates(iftImage *orig, char *filename, int binarizationMetho
     iftDestroyImage(&aux[1]);
     
     // Performs image open operator.    
-    A = iftRetangular(1.0);
+    A = iftCircular(1.0);
     aux[3] = iftOpen(aux[2], A);
     iftDestroyImage(&aux[2]);
     
