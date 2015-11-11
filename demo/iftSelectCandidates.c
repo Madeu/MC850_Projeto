@@ -1,10 +1,12 @@
 /* 
- * File:   main.c
- * Authors: Amadeu Bonfante
+ * MO815 - Análise de Imagem Orientada a um Problema do Mundo Real
+ *
+ * Detecção de placas
+ *
+ * Autores: Amadeu Bonfante
  *	  : Luis Claudio Sugi Afonso
  *	  : Luiz Antonio Falaguasta Barbosa
  *
- * Created on 13 de Setembro de 2015, 10:17
  */
 
 #include <stdio.h>
@@ -38,8 +40,8 @@ int main(int argc, char** argv) {
         fprintf(stdout, "       binarization method: 0 - Sauvola\n");
         fprintf(stdout, "       		     1 - Niblack\n");
         fprintf(stdout, "       		     2 - Otsu\n");
-        fprintf(stdout, "       pooling: 0 - Yes\n");
-        fprintf(stdout, "       	 1 - No\n");
+        fprintf(stdout, "       pooling: 0 - No\n");
+        fprintf(stdout, "       	 1 - Yes\n");
         exit(1);
     } 
 
@@ -54,8 +56,8 @@ int main(int argc, char** argv) {
         fprintf(stdout, "       binarization method: 0 - Sauvola\n");
         fprintf(stdout, "       		     1 - Niblack\n");
         fprintf(stdout, "       		     2 - Otsu\n");
-        fprintf(stdout, "       pooling: 0 - Yes\n");
-        fprintf(stdout, "       	 1 - No\n");
+        fprintf(stdout, "       pooling: 0 - No\n");
+        fprintf(stdout, "       	 1 - Yes\n");
         exit(1);
     } 
 
@@ -69,7 +71,7 @@ int main(int argc, char** argv) {
 	printf("Otsu... ");
     }   
 
-    if(pooling == 0){
+    if(pooling == 1){
 	printf("with Pooling...\n\n ");     
     } else{
 	printf("without Pooling...\n\n ");  

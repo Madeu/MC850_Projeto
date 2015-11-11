@@ -27,8 +27,6 @@ extern "C" {
 #include <mm_malloc.h>
 #include <libgen.h>
 #include <stdarg.h>
-#include <stddef.h>
-#include <ctype.h>
 
 /*
  * Common data types
@@ -169,14 +167,6 @@ double *iftAllocAlignedDoubleArray(int n, int alignment);
 
 /** @} */
 
-
-/**
- * @brief Shuffles an integer array.
- * @param array Array to be shuffled.
- * @param n Number of elements.
- */
-void iftShuffleIntArray(int* array, int n);
-
 void      iftPrintFloatArray(float* v, int n);
 /**
  * Error messages
@@ -268,19 +258,6 @@ timer *iftToc(void);
  */
 
 float iftCompTime(timer *tic, timer *toc);
-
-/**
- * @brief Returns a string with the formatted time: days hours mins secs ms.
- *
- * @author Samuel
- *
- * Given a time in ms, this function returns a formatted time: days hours mins secs ms.
- * The runtime in miliseconds can be obtained with the function iftCompTime(timer *tic, timer *toc).
- *
- * @param runtime Time in ms.
- * @return The formatted time.
- */
-char *  iftFormattedTime(float runtime);
 
 /**
  * Writes a timer to a given file, using the following format %s: %f, where %s is the

@@ -6,7 +6,6 @@ extern "C" {
 #endif
 
 #include "iftCommon.h"
-#include "iftMemory.h"
 #include "iftColor.h"
 #include "iftCurve.h"
 #include "iftSort.h"
@@ -70,7 +69,7 @@ extern "C" {
 #include "iftIGraph.h"
 #include "iftDicom.h"
 #include "iftBow.h"
-#include "iftJSON.h"
+#include "iftMemory.h"
 
 
 #ifdef __cplusplus

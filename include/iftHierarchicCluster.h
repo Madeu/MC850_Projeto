@@ -10,62 +10,72 @@ extern "C" {
 #include "iftKmeans.h"
 #include "iftGraphics.h"
 
-  typedef struct ift_cluster_hierarchy iftClusterHierarchy; 
-  typedef struct ift_cluster_hierarchy_level iftClusterHierarchyLevel;
-  typedef struct ift_cluster iftClusterHierarchyCluster;
-  typedef struct ift_cluster_sample iftClusterSample;
+typedef struct ift_cluster_hierarchy iftClusterHierarchy; 
+typedef struct ift_cluster_hierarchy_level iftClusterHierarchyLevel;
+typedef struct ift_cluster iftClusterHierarchyCluster;
+typedef struct ift_cluster_sample iftClusterSample;
 
-  typedef enum {
-    CLUSTER_HIERARCHY_IN_MEMORY,
-    CLUSTER_HIERARCHY_IN_DISK,
-    CLUSTER_HIERARCHY_INVALID_STATE
-  } iftClusterLoadStatus;
+typedef enum {
+  CLUSTER_HIERARCHY_IN_MEMORY,
+  CLUSTER_HIERARCHY_IN_DISK,
+  CLUSTER_HIERARCHY_INVALID_STATE
+} iftClusterLoadStatus;
 
-  struct ift_cluster_hierarchy {
-    char *path;     /* Where samples can be stored in disk */
-    int totalSamples;
-    int featureSize;
-    int levelCount;
-    iftClusterHierarchyLevel **level;
-  };
+typedef enum {
+  CLUSTER_HIERARCHY_DEEP_COPY,
+  CLUSTER_HIERARCHY_SHALLOW_COPY
+} iftClusterHierarchyCopyType;
 
-  struct ift_cluster_hierarchy_level {
-    int size;
-    int clusterCount;
-    iftClusterHierarchyCluster **cluster;
-  };
+struct ift_cluster_hierarchy {
+  char *path; // Where clusters will be stored in disk
+  int totalSamples;
+  int featureSize;
+  int levelCount;
+  iftClusterHierarchyLevel **level;
+};
 
-  struct ift_cluster {
-    int sampleCount;
-    iftClusterLoadStatus status;
-    iftClusterSample *sample; // When possible, ordered by relevance (e.g. sample[0] is centroid)
-  };
+struct ift_cluster_hierarchy_level {
+  int size;
+  int clusterCount;
+  iftClusterHierarchyCluster **cluster;
+};
 
-  struct ift_cluster_sample {
-    const iftSample *dsSample; // Sample from an iftDataset in memory
-    int sampleID; // Identifies sample globally (including in disk)
-    int isPromoted;
-    int parentCluster;
-  };
+struct ift_cluster {
+  int sampleCount;
+  iftClusterLoadStatus status;
+  iftClusterSample *sample; // Samples are ordered by relevance
+};
 
-  iftClusterHierarchy *iftCreateClusterHierarchy(int featureSize, char *path);
-  void                 iftAddDataSetToClusterHierarchy(iftClusterHierarchy *H, int level, iftDataSet *Z);
-  iftDataSet          *iftClusterToDataSet(iftClusterHierarchy *H, int level, int cluster);
-  void                 iftApplyKNNOnCluster(iftClusterHierarchy *H, int level, int cluster, int K, int maxIterations, float minImprovement);
-  void                 iftApplyOPFOnCluster(iftClusterHierarchy *H, int level, int cluster, int kmax);
-  void                 iftApplyRandomSplitOnCluster(iftClusterHierarchy *H, int level, int cluster); //empty TODO
-  void                 iftApplyClassSplitOnCluster(iftClusterHierarchy *H, int level, int cluster); 
-  void                 iftMoveReferenceCluster(iftClusterHierarchy *H, int level);
-  void                 iftPromoteClusterSample(iftClusterHierarchy *H, int level, int cluster, int sample);
-  void                 iftDestroyHierarchy(iftClusterHierarchy **H);
+struct ift_cluster_sample {
+  float *feat;
+  int isPromoted;
+  int truelabel;
+  int parentCluster;
+};
 
-  /* Standard hierarchy builders
-   *   Fixed hierarchy architectures for ease of use.
-   *   TODO Define some
-   */
+iftClusterHierarchy *iftCreateClusterHierarchy(int featureSize, char *path);
+void                 iftAddDataSetToClusterHierarchy(iftClusterHierarchy *H, int level, iftDataSet *Z, iftClusterHierarchyCopyType copyType);
+iftDataSet          *iftConvertClusterToDataSet(iftClusterHierarchy *H, int level, int cluster);
+void                 iftApplyKNNOnCluster(iftClusterHierarchy *H, int level, int cluster, int K, int maxIterations, float minImprovement);
+void                 iftApplyOPFOnCluster(iftClusterHierarchy *H, int level, int cluster, int kmax);
+void                 iftApplyRandomSplitOnCluster(iftClusterHierarchy *H, int level, int cluster);
+void                 iftApplyClassSplitOnCluster(iftClusterHierarchy *H, int level, int cluster);
+void                 iftPromoteClusterSample(iftClusterHierarchy *H, int level, int cluster, int sample);
+void                 iftUnloadCluster(iftClusterHierarchy *H, int level, int cluster);
+void                 iftLoadCluster(iftClusterHierarchy *H, int level, int cluster);
+void                 iftUnloadHierarchyLevel(iftClusterHierarchy *H, int level);
+void                 iftLoadHierarchyLevel(iftClusterHierarchy *H, int level);
+iftDataSet          *iftChooseSamplesFromHierarchyTop(iftClusterHierarchy *H, int sampleCount);
+void                 iftDestroyHierarchy(iftClusterHierarchy **H);
+void                 iftDestroyShallowDataSet(iftDataSet **Z);
 
-  /* Debug only */
-  void iftDumpHierarchyMetadata(iftClusterHierarchy *H, int showClusters, int showSamples, int showFeatures);
+// Standard hierarchy builders
+// 1 - Kmeans, class, 3 level TODO fix memory leak
+iftClusterHierarchy *iftBuildHierarchy1(iftDataSet *Z, int K, int maxIterations, int minImprovement, char *path, iftClusterHierarchyCopyType copyType);
+
+/* Debug only */
+void DumpHierarchyMetadata(iftClusterHierarchy *H, int showClusters, int showSamples, int showFeatures);
+iftDataSet *GetLabelDataSetByLevel(iftClusterHierarchy *H);
 
 #ifdef __cplusplus
 }

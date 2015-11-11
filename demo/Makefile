@@ -1,5 +1,4 @@
-IFTFLAGS    = -L../lib -L../libsvm -lift -llapack -lblas -lm -lsvm -lstdc++ -I ../include -I../libsvm
-FLAGS = -std=c11
+IFTFLAGS    = -L../lib -lift -llapack -lblas -lm -I ../include
 
 all: $@.c
 
@@ -8,3 +7,4 @@ $@.c: $@.c
 
 clean:
 	rm ../bin/*
+

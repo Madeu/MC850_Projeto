@@ -14,8 +14,6 @@ extern "C" {
 #include "iftMImage.h"
 #include "iftAdjacency.h"
 #include "iftSet.h"
-#include "iftLabeledSet.h"
-#include "iftBMap.h"
 #include "iftFHeap.h"
 #include "iftCompTree.h"
 

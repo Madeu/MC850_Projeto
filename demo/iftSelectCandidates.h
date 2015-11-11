@@ -1,6 +1,13 @@
-//
-// Created by Alan Peixinho on 8/31/15.
-//
+/* 
+ * MO815 - Análise de Imagem Orientada a um Problema do Mundo Real
+ *
+ * Detecção de placas
+ *
+ * Autores: Amadeu Bonfante
+ *	  : Luis Claudio Sugi Afonso
+ *	  : Luiz Antonio Falaguasta Barbosa
+ *
+ */
 
 #ifndef IFT_IFTSELECTCANDIDATES_H
 #define IFT_IFTSELECTCANDIDATES_H
@@ -8,39 +15,6 @@
 
 #include "iftSegmentation.h"
 
-
-#define MIN_VOLUME 1500
-
-/**
- * @brief Remove components with less than minVolume pixels.
- */
-void iftRemoveSmallComponents(iftImage *img, int minVolume) {
-
-    int p, i;
-    int max = iftMaximumValue(img);
-    int *volume = iftAllocIntArray(max + 1);
-    int *labels = iftAllocIntArray(max + 1);
-
-    for (p = 0; p < img->n; ++p) {
-        if (img->val[p] > 0)
-            volume[img->val[p]]++;
-    }
-
-    int nlabels = 1;
-    for (i = 1; i <= max; ++i) {
-        if (volume[i] < minVolume)
-            labels[i] = nlabels++;
-        else
-            labels[i] = 0;
-    }
-
-    for (p = 0; p < img->n; ++p) {
-        img->val[p] = labels[img->val[p]];
-    }
-
-    free(labels);
-    free(volume);
-}
 
 
 iftImage *binarizationBySauvola(iftImage *orig){
@@ -132,8 +106,7 @@ iftImage *binarizationByNiblack(iftImage *orig){
     int numWindowsX = orig->xsize/tileSize;
     int numWindowsY = orig->ysize/tileSize;
     
-    // Sauvola parameters.
-    int R = 128;
+    // Niblack parameters.
     float k = -0.2;
         
     // Array that stores pixels' values to compute local threshold.
@@ -233,23 +206,7 @@ iftImage *computeDenserRegions(iftImage *orig, iftImage *plateImage, char *filen
             }
            
             
-            float percentage = 0.0;
-            
-            /*for(int i = x; i < tileXSize+x; i++){                
-                for(int j = y; j < tileYSize+y; j++){
-                    v.x = i;
-                    v.y = j;
-                    
-                    int coord = iftGetVoxelIndex(orig, v);
-                    if(orig->val[coord] == 4095){
-                        count++;
-                    }  
-                    
-                }
-            }
-            
-            printf(">>>>>>>>>>>>>> [%d][%d] = %f || %d\n", x, y,percentage);*/
-            
+            float percentage = 0.0;            
             
             // Considering a 15x15 window
             // 8 = número de janelas em X.
@@ -270,23 +227,15 @@ iftImage *computeDenserRegions(iftImage *orig, iftImage *plateImage, char *filen
                         for(yCoord = y + 15*j; yCoord < (y + 15*j+15); yCoord++){
                             v.x = xCoord;
                             v.y = yCoord;
-                            
-                            //printf("Pixel [%d][%d] -- %d|%d -- i = %d; j = %d\n", xCoord, yCoord, x, y, i, j);
-                    
+                                                
                             int coord = iftGetVoxelIndex(orig, v);
-                           /* if(orig->val[coord] >= 2048){
-                                count++;
-                            } */
+
                             values[count] = orig->val[coord];
                             count++;                                                       
                         }
-                    }
+                    }                                   
                     
-                    //percentage = percentage + (float)count/225;                    
-                    
-                    float stddev = iftStddevFloatArray(values, 225);
-                    
-                    //printf("--------------- [%d][%d] = %d\n", i, j,count);
+                    float stddev = iftStddevFloatArray(values, 225);                    
                     
                     percentage = percentage + stddev;
                 }
@@ -302,9 +251,7 @@ iftImage *computeDenserRegions(iftImage *orig, iftImage *plateImage, char *filen
             }         
         }
     }
-        
-    printf("Max percentage: %f @ [%d, %d]\n", maxPercentage_1, maxVoxel_1.x, maxVoxel_1.y);
-    
+            
     
     //--------------------------------------------------------------------------
     // Saves selected region.
@@ -396,7 +343,7 @@ iftImage *selectCandidates(iftImage *orig, char *filename, int binarizationMetho
     aux[3] = iftOpen(aux[2], A);
     iftDestroyImage(&aux[2]);
     
-    if(pooling == 0){
+    if(pooling == 1){
         // Performs pooling.
         aux[4] = iftAlphaPooling(aux[3], A, 4, 2);  
 

@@ -9,7 +9,7 @@ int main(int argc, char* argv []) {
         iftError("Usage: <images folder> <labels folder> <classifier> <output detect folder>", argv[0]);
     }
 
-    iftSVM* svm = iftReadSVM(argv[3]);
+    iftCplGraph* graph = iftReadCplGraph(argv[3]);
 
     iftDir* imgsDir = iftLoadFilesFromDirectory(argv[1], "pgm");
     iftDir* labelsDir = iftLoadFilesFromDirectory(argv[2], "pgm");
@@ -36,7 +36,6 @@ int main(int argc, char* argv []) {
 
         int numCandidates = iftMaximumValue(candImg);
         Zt = iftCreateDataSet(numCandidates, DESCRIPTOR_SIZE);
-        iftSetStatus(Zt, TEST);
 
         // Select positive and negative examples
         for (int j = 0; j < numCandidates ; j++) {
@@ -56,7 +55,7 @@ int main(int argc, char* argv []) {
             iftDestroyFeatures(&feat);
         }
 
-        iftSVMClassifyOVO(svm, Zt, TEST);
+        iftClassify(graph, Zt);
 
         float acc = 0.0f;
         int numPixels = 0;

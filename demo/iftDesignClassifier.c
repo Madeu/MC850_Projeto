@@ -17,10 +17,10 @@ int main(int argc, char * argv[]) {
     for (int i = 0; i < NRUNS; ++i) {
 
         iftSelectSupTrainSamples(Z, TRAIN_PERC);
-        iftSVM* svm = iftCreateLinearSVC(1e4);
+        iftCplGraph* graph = iftCreateCplGraph(Z);
 
-        iftSVMTrainOVO(svm, Z);
-        iftSVMClassifyOVO(svm, Z, TEST);
+        iftSupTrain(graph);
+        iftClassify(graph, Z);
 
         acc = iftTruePositives(Z);
 
@@ -28,10 +28,10 @@ int main(int argc, char * argv[]) {
 
         if(acc > bestAcc) {
             bestAcc = acc;
-            iftWriteSVM(svm, argv[2]);
+            iftWriteCplGraph(graph, argv[2]);
         }
 
-        iftDestroySVM(svm);
+        iftDestroyCplGraph(&graph);
     }
     return 0;
 
