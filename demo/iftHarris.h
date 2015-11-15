@@ -83,7 +83,6 @@ void gradient(iftImage *img, iftImage **gradX, iftImage **gradY) {
 				(*gradX)->val[p] = gx;
 				(*gradY)->val[p] = gy;
 
-
 			}
 		}
 
@@ -97,6 +96,14 @@ void iftHarris(iftImage *img, iftImage **corners, float threshold) {
 	iftImage *gx;
 	iftImage *gy;
 
+	iftImage *aux[3];
+	iftImage *ix2;
+	iftImage *iy2;
+	iftImage *ixy;
+
+	iftKernel *gaussianKrnl = iftGaussianKernel2D(3, 4.0);
+
+
 	int p;
 	float r;
 	float gx2, gy2, gxy;
@@ -105,6 +112,14 @@ void iftHarris(iftImage *img, iftImage **corners, float threshold) {
 
 	gradient(img, &gx, &gy);
 
+	aux[0] = iftMult(gx, gx);
+	aux[1] = iftMult(gy, gy);
+	aux[2] = iftMult(gx, gy);
+
+	ix2 = iftFastLinearFilter(aux[0], gaussianKrnl, 0);
+	iy2 = iftFastLinearFilter(aux[1], gaussianKrnl, 0);
+	ixy = iftFastLinearFilter(aux[2], gaussianKrnl, 0);
+
 	/**TODO Smooth gradients? **/
 
 	*corners = iftCreateImage(img->xsize, img->ysize, img->zsize);
@@ -112,12 +127,9 @@ void iftHarris(iftImage *img, iftImage **corners, float threshold) {
 	/** R = Det(H) - k (Trace(H))^2 **/
 
 	for (p = 0; p < img->n; ++p) {
-		gx2 = pow(gx->val[p], 2.0);
-		gy2 = pow(gy->val[p], 2.0);
-		gxy = gy->val[p] * gx->val[p];
 
-		det = gx2 * gy2 - gxy * gxy;
-		trace = gx2 + gy2;
+		det = ix2->val[p] * iy2->val[p] - ixy->val[p] * ixy->val[p];
+		trace = ix2->val[p] + iy2->val[p];
 
 		r = det - k * pow(trace, 2.0);
 
@@ -125,18 +137,18 @@ void iftHarris(iftImage *img, iftImage **corners, float threshold) {
 			(*corners)->val[p] = 255; // for visualization purposes
 		else
 			(*corners)->val[p] = 0;
-
-		printf("gx2: %.1f\t", gx2);
-		printf("gy2: %.1f\t", gy2);
-		printf("gxy: %.1f\t", gxy);
-		printf("det: %.1f\t", det);
-		printf("trace: %.1f\t", trace);
-		printf("r: %.1f\n", r);
 	}
 
+	iftDestroyImage(&gx);
+	iftDestroyImage(&gy);
+	iftDestroyImage(&ix2);
+	iftDestroyImage(&iy2);
+	iftDestroyImage(&ixy);
+	iftDestroyImage(&aux[0]);
+	iftDestroyImage(&aux[1]);
+	iftDestroyImage(&aux[2]);
+	iftDestroyKernel(&gaussianKrnl);
 
 }
-
-
 
 #endif /* IFTHARRIS_H_ */

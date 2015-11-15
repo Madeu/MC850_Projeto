@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 
 	iftImage *corners;
 
-	iftHarris(img, &corners, 10);
+	iftHarris(img, &corners, 10000);
 
 	iftWriteImageP2(corners, "corners.pgm");
 
