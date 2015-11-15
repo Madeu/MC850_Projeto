@@ -1,0 +1,39 @@
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+
+# Eclipse stuff
+.project
+.cproject
+
+# dropbox stuff
+.dropbox.attr
+
+# test images
+*.pgm
+
+# ignore bin dir
+ift/bin/*
+bin/*
+
+# ignore Mac files
+*.DS_Store
+
+.settings
