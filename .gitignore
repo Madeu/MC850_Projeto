@@ -32,6 +32,7 @@
 # ignore bin dir
 ift/bin/*
 bin/*
+img/*
 
 # ignore Mac files
 *.DS_Store
