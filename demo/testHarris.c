@@ -17,8 +17,10 @@ int main(int argc, char *argv[]) {
 	iftImage *img = iftReadImageByExt(argv[1]);
 
 	iftImage *corners;
+	iftVoxel conerList[img->n];
+	int len;
 
-	iftHarris(img, &corners, 10000);
+	iftHarris(img, 10000, &corners, conerList, &len);
 
 	iftWriteImageP2(corners, "corners.pgm");
 

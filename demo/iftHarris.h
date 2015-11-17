@@ -26,7 +26,7 @@ void gradient(iftImage *img, iftImage **gradX, iftImage **gradY);
  * @param[in]	img			gray scale image.
  * @param[out]	corners		corners detected.
  */
-void iftHarris(iftImage *img, iftImage **corners, float threshold);
+void iftHarris(iftImage *img, float threshold, iftImage **corners, iftVoxel *cornersList, int *len);
 
 /**================================================================================**/
 /**================================================================================**/
@@ -92,7 +92,7 @@ void gradient(iftImage *img, iftImage **gradX, iftImage **gradY) {
 
 /**================================================================================**/
 
-void iftHarris(iftImage *img, iftImage **corners, float threshold) {
+void iftHarris(iftImage *img, float threshold, iftImage **corners, iftVoxel *cornersList, int *len) {
 	iftImage *gx;
 	iftImage *gy;
 
@@ -103,12 +103,17 @@ void iftHarris(iftImage *img, iftImage **corners, float threshold) {
 
 	iftKernel *gaussianKrnl = iftGaussianKernel2D(3, 4.0);
 
-
-	int p;
+	int p, q, i;
 	float r;
 	float gx2, gy2, gxy;
 	float det, trace;
 	float k = 0.04;
+
+	iftAdjRel* adj = iftRectangular(9, 3);
+	iftVoxel v;
+	iftVoxel u;
+	int current;
+	int voxelId = 0;
 
 	gradient(img, &gx, &gy);
 
@@ -119,8 +124,6 @@ void iftHarris(iftImage *img, iftImage **corners, float threshold) {
 	ix2 = iftFastLinearFilter(aux[0], gaussianKrnl, 0);
 	iy2 = iftFastLinearFilter(aux[1], gaussianKrnl, 0);
 	ixy = iftFastLinearFilter(aux[2], gaussianKrnl, 0);
-
-	/**TODO Smooth gradients? **/
 
 	*corners = iftCreateImage(img->xsize, img->ysize, img->zsize);
 
@@ -133,11 +136,34 @@ void iftHarris(iftImage *img, iftImage **corners, float threshold) {
 
 		r = det - k * pow(trace, 2.0);
 
+
 		if (r > threshold)
-			(*corners)->val[p] = 255; // for visualization purposes
+			(*corners)->val[p] = r; // for visualization purposes
 		else
 			(*corners)->val[p] = 0;
 	}
+
+	/** Nonmaximal supression **/
+
+	for (p = 0; p < (*corners)->n; ++p) {
+		current = (*corners)->val[p];
+		iftVoxel v = iftGetVoxelCoord((*corners), p);
+
+		for (i = 0; i < adj->n; ++i) {
+			iftVoxel u = iftGetAdjacentVoxel(adj, v, i);
+			if (iftValidVoxel(img, u)) {
+				q = iftGetVoxelIndex((*corners), u);
+				if ((*corners)->val[q] > current) {
+					current = 0;
+					break;
+				}
+			}
+		}
+
+		if (current != 0)
+			cornersList[voxelId++] = v;
+	}
+	*len = voxelId;
 
 	iftDestroyImage(&gx);
 	iftDestroyImage(&gy);
