@@ -38,6 +38,21 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < atoi(argv[2]); i++) {
 		sprintf(buf, "group-%d.pgm", i);
 		iftImage* imgaux = iftReadImageByExt(argv[1]);
+		iftVoxel* voxels = (iftVoxel*) malloc(counter[i]*sizeof(iftVoxel));
+		int k = 0;
+
+		for (int j = 0; j < dataset->nsamples; j++) {
+			if(dataset->sample[j].label == (i+1)){
+				voxels[k].x = (int)dataset->sample[j].feat[0];
+				voxels[k].y = (int)dataset->sample[j].feat[1];
+				voxels[k].z = 0;
+				k++;
+			}
+		}
+
+		plotPoint(imgaux, voxels, counter[i]);
+
+		free(voxels);
 		iftWriteImageP2(imgaux, buf);
 		iftDestroyImage(&imgaux);
 	}
