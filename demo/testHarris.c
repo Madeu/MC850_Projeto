@@ -6,6 +6,7 @@
  */
 
 #include "iftHarris.h"
+#include "iftSeedsGenerator.h"
 
 int main(int argc, char *argv[]) {
 
@@ -21,8 +22,12 @@ int main(int argc, char *argv[]) {
 	int len;
 
 	iftHarris(img, 10000, &corners, conerList, &len);
+	plotPoint(img, conerList, len);
+
+	printf("len: %d\n", len);
 
 	iftWriteImageP2(corners, "corners.pgm");
+	iftWriteImageP2(img, "img-corners.pgm");
 
 	iftDestroyImage(&img);
 	iftDestroyImage(&corners);
