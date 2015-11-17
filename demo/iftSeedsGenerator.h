@@ -1,8 +1,8 @@
 #include "ift.h"
 #include <string.h>
 
-#define EPSILON 0.0001
-#define MAX_INTERATION 1000
+#define EPSILON 0.00001
+#define MAX_INTERATION 100000
 
 /**
 	Function that read a file which contians points in the format:
@@ -84,7 +84,7 @@ void plotPoint(iftImage* img, iftVoxel* u, int len) {
 
 	iftColor pcolor = iftRGBtoYCbCr(color, 0);
 
-	for (int i = 0; i < len; i++) {
+	for (int i = 0; i < len; i++) {	
 		iftDrawPoint(img, u[i], pcolor, A);
 	}
 
@@ -108,18 +108,42 @@ iftDataSet* createDataSet(iftVoxel* points, int size){
 
 		samples[i].feat = feature;
 		samples[i].id = i+1;
+		samples[i].label = 0;
 	}
 
 	dataSet->sample = samples;
 	return dataSet;
 }
 
-iftDataSet* generateCentroids(iftVoxel* points, int size) {
-	iftDataSet* dataSet = createDataSet(points, size);
-	iftDataSet* centers = iftKmeansInitCentroidsFromSamples(dataSet, 2);
-	iftKmeansRun(0, dataSet, &centers, MAX_INTERATION, EPSILON);
+int* countGroup(iftDataSet* dataset) {
+	int num_centers = dataset->nfeats;
+	int* count = malloc(num_centers*sizeof(int));
 
-	iftDestroyDataSet(&dataSet);
+	for(int i = 0; i < num_centers; i++) {
+		count[i] = 0;
+	}
 
-	return centers;
+	for(int i = 0; i < dataset->nsamples; i++) {
+		count[dataset->sample[i].label - 1] += 1;
+	}
+
+	return count;
+}
+
+iftVoxel* generateCentroids(iftDataSet** dataSet, iftVoxel* points, int size, int num_centers) {
+	*dataSet = createDataSet(points, size);
+
+	iftDataSet* centers = iftKmeansInitCentroidsFromSamples((*dataSet), num_centers);
+	iftKmeansRun(0, (*dataSet), &centers, MAX_INTERATION, EPSILON);
+	
+	iftVoxel *centersPos = (iftVoxel*) malloc(centers->nsamples*sizeof(iftVoxel));
+	for(int i = 0; i < centers->nsamples; i++) {
+		centersPos[i].x = (int)centers->sample[i].feat[0];
+		centersPos[i].y = (int)centers->sample[i].feat[1];
+		centersPos[i].z = 0;
+	}
+
+	iftDestroyDataSet(&centers);
+
+	return centersPos;
 }

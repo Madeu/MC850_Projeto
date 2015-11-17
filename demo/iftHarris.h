@@ -109,7 +109,7 @@ void iftHarris(iftImage *img, float threshold, iftImage **corners, iftVoxel *cor
 	float det, trace;
 	float k = 0.04;
 
-	iftAdjRel* adj = iftRectangular(9, 3);
+	iftAdjRel* adj = iftRectangular(2, 2);
 	iftVoxel v;
 	iftVoxel u;
 	int current;

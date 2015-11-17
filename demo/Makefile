@@ -1,4 +1,4 @@
-IFTFLAGS    = -L../lib -lift -llapack -lblas -lm -I ../include
+IFTFLAGS    = -std=c99 -L../lib -lift -llapack -lblas -lm -I ../include
 
 all: $@.c
 
