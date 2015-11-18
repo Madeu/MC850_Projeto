@@ -2,8 +2,8 @@
 
 int main(int argc, char *argv[]) {
 
-	if (argc < 4) {
-		printf("usage:\n\t %s <dir_source> <dir_dest> <num> \n", argv[0]);
+	if (argc < 3) {
+		printf("usage:\n\t %s <dir_source> <dir_dest> \n", argv[0]);
 		exit(1);
 	}
 	
@@ -19,18 +19,22 @@ int main(int argc, char *argv[]) {
 	iftDir* inputDir = iftLoadFilesFromDirectory(argv[1], "pgm");
 	char outfile[100];
 
-	iftImage *img = iftReadImageByExt(inputDir->files[atoi(argv[3])]->pathname);
+	int i;
+    	for (i = 0; i < inputDir->nfiles; ++i) {
 
-	iftVoxel v = getBigCenter(img, 10000, 2);
+		iftImage *img = iftReadImageByExt(inputDir->files[i]->pathname);
+
+		iftVoxel v = getBigCenter(img, 10000, 2);
 
 	
-	sprintf(outfile, "%s/%s", argv[2], iftBasename(inputDir->files[atoi(argv[3])]->pathname));
-	iftDrawPoint(img, v, pcolor, A);
-	iftWriteImageP2(img, outfile);
+		sprintf(outfile, "%s/%s", argv[2], iftBasename(inputDir->files[i]->pathname));
+		iftDrawPoint(img, v, pcolor, A);
+		iftWriteImageP2(img, outfile);
 
-	printf("Plot img %d\n", atoi(argv[3]));
+		printf("Plot img %d\n", i);
 
-	iftDestroyImage(&img);
+		iftDestroyImage(&img);
+ 	}	
 
 	iftDestroyAdjRel(&A);
 
