@@ -1,5 +1,8 @@
 #include "ift.h"
+#include "iftHarris.h"
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define EPSILON 0.00001
 #define MAX_INTERATION 100000
@@ -75,7 +78,7 @@ int readPoint(char *filename, iftVoxel* u) {
 	-len : size of u (number of points)
 */
 void plotPoint(iftImage* img, iftVoxel* u, int len) {
-	iftAdjRel *A = iftCircular(2.0);
+	iftAdjRel *A = iftCircular(2.5);
 
 	iftColor color;
 	color.val[0] = 1.0;
@@ -97,7 +100,7 @@ void plotPoint(iftImage* img, iftVoxel* u, int len) {
 */
 iftDataSet* createDataSet(iftVoxel* points, int size){
 
-	iftDataSet* dataSet = iftCreateDataSet(size, 2);
+	iftDataSet* dataset = iftCreateDataSet(size, 2);
 	iftSample* samples = (iftSample *) malloc(size*sizeof(iftSample));
 
 	for (int i = 0; i < size; i++) {
@@ -111,8 +114,8 @@ iftDataSet* createDataSet(iftVoxel* points, int size){
 		samples[i].label = 0;
 	}
 
-	dataSet->sample = samples;
-	return dataSet;
+	dataset->sample = samples;
+	return dataset;
 }
 
 int* countGroup(iftDataSet* dataset) {
@@ -130,11 +133,11 @@ int* countGroup(iftDataSet* dataset) {
 	return count;
 }
 
-iftVoxel* generateCentroids(iftDataSet** dataSet, iftVoxel* points, int size, int num_centers) {
-	*dataSet = createDataSet(points, size);
+iftVoxel* generateCentroids(iftDataSet** dataset, iftVoxel* points, int size, int num_centers) {
+	*dataset = createDataSet(points, size);
 
-	iftDataSet* centers = iftKmeansInitCentroidsFromSamples((*dataSet), num_centers);
-	iftKmeansRun(0, (*dataSet), &centers, MAX_INTERATION, EPSILON);
+	iftDataSet* centers = iftKmeansInitCentroidsFromSamples((*dataset), num_centers);
+	iftKmeansRun(0, (*dataset), &centers, MAX_INTERATION, EPSILON);
 	
 	iftVoxel *centersPos = (iftVoxel*) malloc(centers->nsamples*sizeof(iftVoxel));
 	for(int i = 0; i < centers->nsamples; i++) {
@@ -146,4 +149,41 @@ iftVoxel* generateCentroids(iftDataSet** dataSet, iftVoxel* points, int size, in
 	iftDestroyDataSet(&centers);
 
 	return centersPos;
+}
+
+iftVoxel getBigCenter(iftImage* img ,int harris_number, int num_centers){
+	int len, max, maxpos = 0;
+	iftDataSet* dataset;
+	iftImage *corners;
+	iftVoxel corner_list[img->n];
+
+	iftHarris(img, harris_number, &corners, corner_list, &len);
+	iftVoxel* centers_pos = generateCentroids(&dataset, corner_list, len, num_centers);
+
+	int *counter = countGroup(dataset);
+
+	max = counter[0];
+	for (int i = 0; i < num_centers; i++) {
+		printf("%d\n", counter[i]);
+		if(max < counter[i]) {
+			max = counter[i];
+			maxpos = i;
+		}
+	}
+
+	for (int i = 0; i < num_centers; i++ ){
+			printf("%d - [%d, %d]\n", i, centers_pos[i].x, centers_pos[i].y);
+	}
+
+	iftVoxel voxel;
+	voxel.x = centers_pos[maxpos].x;
+	voxel.y = centers_pos[maxpos].y;
+	voxel.z = centers_pos[maxpos].z;
+
+	iftDestroyImage(&corners);
+	iftDestroyDataSet(&dataset);
+	free(counter);
+	free(centers_pos);
+
+	return voxel;
 }

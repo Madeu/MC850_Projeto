@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     int i;
     for (i = 0; i < inputDir->nfiles; ++i) {
 
-        orig = iftReadImageP5(inputDir->files[i]->pathname);
+        orig = iftReadImageByExt(inputDir->files[i]->pathname);
 
         t1 = iftTic();
 
