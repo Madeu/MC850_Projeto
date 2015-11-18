@@ -35,7 +35,13 @@ int main(int argc, char *argv[]) {
 
 	int *counter = countGroup(dataset);
 	char buf[20];
+
+	for (int i = 0; i < atoi(argv[2]); i++ ){
+			printf("%d - [%d, %d]\n", i, centersPos[i].x, centersPos[i].y);
+	}
+
 	for (int i = 0; i < atoi(argv[2]); i++) {
+		printf("[%d] - > %d\n", i, counter[i]);
 		sprintf(buf, "group-%d.pgm", i);
 		iftImage* imgaux = iftReadImageByExt(argv[1]);
 		iftVoxel* voxels = (iftVoxel*) malloc(counter[i]*sizeof(iftVoxel));
