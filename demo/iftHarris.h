@@ -101,7 +101,7 @@ void iftHarris(iftImage *img, float threshold, iftImage **corners, iftVoxel *cor
 	iftImage *iy2;
 	iftImage *ixy;
 
-	iftKernel *gaussianKrnl = iftGaussianKernel2D(3, 4.0);
+	iftKernel *gaussianKrnl = iftGaussianKernel2D(3, 22.0);
 
 	int p, q, i;
 	float r;
@@ -109,7 +109,7 @@ void iftHarris(iftImage *img, float threshold, iftImage **corners, iftVoxel *cor
 	float det, trace;
 	float k = 0.04;
 
-	iftAdjRel* adj = iftRectangular(2, 2);
+	iftAdjRel* adj = iftRectangular(3, 3);
 	iftVoxel v;
 	iftVoxel u;
 	int current;
@@ -134,7 +134,8 @@ void iftHarris(iftImage *img, float threshold, iftImage **corners, iftVoxel *cor
 		det = ix2->val[p] * iy2->val[p] - ixy->val[p] * ixy->val[p];
 		trace = ix2->val[p] + iy2->val[p];
 
-		r = det - k * pow(trace, 2.0);
+		//r = det - k * pow(trace, 2.0);
+		r = det / (trace + .00001); //new formulation
 
 
 		if (r > threshold)
