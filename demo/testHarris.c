@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 	iftVoxel conerList[img->n];
 	int len;
 
-	iftHarris(img, 500, &corners, conerList, &len);
+	iftHarris(img, 1000, &corners, conerList, &len);
 	plotPoint(img, conerList, len);
 //	iftVoxel* centersPos = generateCentroids(&dataset, conerList, len, atoi(argv[2]));
 

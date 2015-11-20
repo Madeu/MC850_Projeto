@@ -3,12 +3,12 @@
 int main(int argc, char *argv[]) {
 
 	if (argc < 3) {
-		printf("usage:\n\t %s <dir_source> <dir_dest> \n", argv[0]);
+		printf("usage:\n\t %s <img_source> <img _dest> \n", argv[0]);
 		exit(1);
 	}
 	
 
-	iftAdjRel *A = iftCircular(2.0);
+	iftAdjRel *A = iftCircular(3.0);
 
 	iftColor color;
 	color.val[0] = 1.0;
@@ -16,26 +16,18 @@ int main(int argc, char *argv[]) {
 	color.val[2] = 1.0;
 	iftColor pcolor = iftRGBtoYCbCr(color, 0);
 
-	iftDir* inputDir = iftLoadFilesFromDirectory(argv[1], "pgm");
-	char outfile[100];
+	iftImage *img = iftReadImageByExt(argv[1]);	
 
-	int i;
-    	for (i = 0; i < inputDir->nfiles; ++i) {
+	//Methodo para pegar o centroide mais denso
+	iftVoxel v = getBigCenter(img, 1000, 2);
 
-		iftImage *img = iftReadImageByExt(inputDir->files[i]->pathname);
+	iftDrawPoint(img, v, pcolor, A);
 
-		iftVoxel v = getBigCenter(img, 10000, 2);
+	iftWriteImageP2(img, argv[2]);
 
-	
-		sprintf(outfile, "%s/%s", argv[2], iftBasename(inputDir->files[i]->pathname));
-		iftDrawPoint(img, v, pcolor, A);
-		iftWriteImageP2(img, outfile);
+	printf("Plot img %s\n", argv[2]);
 
-		printf("Plot img %d\n", i);
-
-		iftDestroyImage(&img);
- 	}	
-
+	iftDestroyImage(&img);
 	iftDestroyAdjRel(&A);
 
 	return 0;
