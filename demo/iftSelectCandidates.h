@@ -15,6 +15,21 @@
 
 #include "iftSegmentation.h"
 
+void saveCandidate(char* destFolder, char *filename, iftVoxel v){
+	char outfile[100];
+
+	char* p = strtok(filename, ".");
+
+	sprintf(outfile, "%s/%s_candidate.txt", destFolder, p);
+
+	FILE *candidate = fopen(outfile, "w");
+
+	fprintf(candidate, "%d %d\n", v.x, v.y);
+
+	fclose(candidate);
+
+}
+
 
 
 iftImage *binarizationBySauvola(iftImage *orig){
@@ -166,7 +181,7 @@ iftImage *binarizationByNiblack(iftImage *orig){
 }
 
 
-iftImage *computeDenserRegions(iftImage *orig, iftImage *plateImage, char *filename){
+iftImage *computeDenserRegions(char* destFolder, iftImage *orig, iftImage *plateImage, char *filename){
     
     iftVoxel v;
     v.x = 0;
@@ -275,7 +290,7 @@ iftImage *computeDenserRegions(iftImage *orig, iftImage *plateImage, char *filen
     auxVoxel.y = auxVoxel.y + 45;
     
     iftImage *roi = iftExtractROI(plateImage, maxVoxel_1, auxVoxel);
-    //iftWriteImageP2(roi, filename);
+    /*iftWriteImageP2(roi, filename);*/
     //--------------------------------------------------------------------------
     
     
@@ -301,16 +316,20 @@ iftImage *computeDenserRegions(iftImage *orig, iftImage *plateImage, char *filen
             v.y = yCoord;
                                 
             int coord = iftGetVoxelIndex(orig, v);
-            orig->val[coord] = 4095;
+            orig->val[coord] = 255;
         }
     }
+
+    saveCandidate(destFolder, filename, maxVoxel_1);
+
+    //iftWriteImageP2(orig, filename);
     
     return roi;     
 }
 
 
 
-iftImage *selectCandidates(iftImage *orig, char *filename, int binarizationMethod, int pooling) {
+iftImage *selectCandidates(iftImage *orig, char* destFolder, char *filename, int binarizationMethod, int pooling) {
    
     iftAdjRel *A = NULL;  
     iftKernel *Kx = NULL;
@@ -348,10 +367,10 @@ iftImage *selectCandidates(iftImage *orig, char *filename, int binarizationMetho
         aux[4] = iftAlphaPooling(aux[3], A, 4, 2);  
 
         // Finds region with high number of white pixels.
-        aux[0] = computeDenserRegions(aux[4], orig, filename);      
+        aux[0] = computeDenserRegions(destFolder, aux[4], orig, filename);      
     } else{
         // Finds region with high number of white pixels.
-        aux[0] = computeDenserRegions(aux[3], orig, filename);
+        aux[0] = computeDenserRegions(destFolder, aux[3], orig, filename);
     }
 
     iftDestroyImage(&aux[3]); 

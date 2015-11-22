@@ -18,8 +18,24 @@ int main(int argc, char *argv[]) {
 
 	iftImage *img = iftReadImageByExt(argv[1]);	
 
-	//Methodo para pegar o centroide mais denso
+	//Metodo para pegar o centroide mais denso
 	iftVoxel v = getBigCenter(img, 1000, 2);
+
+	FILE *candidateCoord = fopen("../candidates/0006.pgm.txt", "r");
+
+	int x, y;
+
+	fscanf(candidateCoord, "%d %d", &x, &y);
+	printf("%d %d\n", x, y);
+
+	fclose(candidateCoord);
+
+	iftVoxel aux;
+	aux.x = v.x + x;
+	aux.y = v.y + y;
+	aux.z = v.z;
+
+	writeSeedFile(aux);
 
 	iftDrawPoint(img, v, pcolor, A);
 

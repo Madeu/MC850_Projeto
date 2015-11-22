@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
 
         t1 = iftTic();
 
-        iftImage *candidates = selectCandidates(orig, iftBasename(inputDir->files[i]->pathname), binarization, pooling);     
+        iftImage *candidates = selectCandidates(orig, argv[2], iftBasename(inputDir->files[i]->pathname), binarization, pooling);     
 
         t2 = iftToc();
 
