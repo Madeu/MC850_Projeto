@@ -33,6 +33,9 @@
 ift/bin/*
 bin/*
 img/*
+plates/*
+seeds/*
+sgm/*
 
 # ignore Mac files
 *.DS_Store
