@@ -31,7 +31,6 @@
 
 # ignore bin dir
 ift/bin/*
-bin/*
 img/*
 plates/*
 seeds/*
