@@ -1,40 +1,13 @@
 #include "ift.h"
 
-
-/* correction matrix * coefficient column = destination point column 
+/* camera calibration matrix * coefficient column = destination point column 
    A * b = c
    b  = Inv(A) c
    convert b into B (3x3 matrix)
    return B
 */
 
-iftMatrix *iftObjectAlignMatrixByPCA(iftImage *bin) 
-{ 
-  iftDataSet *Z=iftObjectToDataSet(bin);
-
-  iftSetStatus(Z,TRAIN);
-  iftDataSet *Zc=iftCentralizeDataSet(Z);
-  iftMatrix  *C = iftCovarianceMatrix(Zc);
-  iftMatrix  *U,*S,*Vt;
-  iftSingleValueDecomp(C,&U,&S,&Vt);
-  iftDestroyMatrix(&C);
-  iftDestroyMatrix(&U);
-  iftDestroyMatrix(&S);
-  iftDestroyDataSet(&Zc);
-  iftDestroyDataSet(&Z);
-
-  /* It assumes that the alignment must not flip the object along any
-     axis. */
-
-	int i;
-  for (i=0; i < Vt->nrows; i++) 
-    if (Vt->val[iftGetMatrixIndex(Vt,i,i)] < 0) 
-      Vt->val[iftGetMatrixIndex(Vt,i,i)]=-Vt->val[iftGetMatrixIndex(Vt,i,i)];
-  
-  return(Vt);
-}
-
-iftMatrix *iftCorrectionMatrix(iftPoint *src, iftPoint *dst)
+iftMatrix *iftCameraCalibrationMatrix(iftPoint *src, iftPoint *dst)
 {
   iftMatrix *A = iftCreateMatrix(8,8), *c = iftCreateMatrix(1,8);
   iftMatrix *invA, *b, *B;
@@ -43,12 +16,12 @@ iftMatrix *iftCorrectionMatrix(iftPoint *src, iftPoint *dst)
   A->val[iftGetMatrixIndex(A,1,0)] = src[0].y;
   A->val[iftGetMatrixIndex(A,2,0)] = 1.0;
   A->val[iftGetMatrixIndex(A,6,0)] = -src[0].x*dst[0].x;
-  A->val[iftGetMatrixIndex(A,7,0)] = -src[0].y*dst[0].y;
+  A->val[iftGetMatrixIndex(A,7,0)] = -src[0].y*dst[0].x;
 
   A->val[iftGetMatrixIndex(A,3,1)] = src[0].x;
   A->val[iftGetMatrixIndex(A,4,1)] = src[0].y;
   A->val[iftGetMatrixIndex(A,5,1)] = 1.0;
-  A->val[iftGetMatrixIndex(A,6,1)] = -src[0].x*dst[0].x;
+  A->val[iftGetMatrixIndex(A,6,1)] = -src[0].x*dst[0].y;
   A->val[iftGetMatrixIndex(A,7,1)] = -src[0].y*dst[0].y;
 
 
@@ -56,25 +29,24 @@ iftMatrix *iftCorrectionMatrix(iftPoint *src, iftPoint *dst)
   A->val[iftGetMatrixIndex(A,1,2)] = src[1].y;
   A->val[iftGetMatrixIndex(A,2,2)] = 1.0;
   A->val[iftGetMatrixIndex(A,6,2)] = -src[1].x*dst[1].x;
-  A->val[iftGetMatrixIndex(A,7,2)] = -src[1].y*dst[1].y;
+  A->val[iftGetMatrixIndex(A,7,2)] = -src[1].y*dst[1].x;
 
   A->val[iftGetMatrixIndex(A,3,3)] = src[1].x;
   A->val[iftGetMatrixIndex(A,4,3)] = src[1].y;
   A->val[iftGetMatrixIndex(A,5,3)] = 1.0;
-  A->val[iftGetMatrixIndex(A,6,3)] = -src[1].x*dst[1].x;
+  A->val[iftGetMatrixIndex(A,6,3)] = -src[1].x*dst[1].y;
   A->val[iftGetMatrixIndex(A,7,3)] = -src[1].y*dst[1].y;
-
 
   A->val[iftGetMatrixIndex(A,0,4)] = src[2].x;
   A->val[iftGetMatrixIndex(A,1,4)] = src[2].y;
   A->val[iftGetMatrixIndex(A,2,4)] = 1.0;
   A->val[iftGetMatrixIndex(A,6,4)] = -src[2].x*dst[2].x;
-  A->val[iftGetMatrixIndex(A,7,4)] = -src[2].y*dst[2].y;
+  A->val[iftGetMatrixIndex(A,7,4)] = -src[2].y*dst[2].x;
 
   A->val[iftGetMatrixIndex(A,3,5)] = src[2].x;
   A->val[iftGetMatrixIndex(A,4,5)] = src[2].y;
   A->val[iftGetMatrixIndex(A,5,5)] = 1.0;
-  A->val[iftGetMatrixIndex(A,6,5)] = -src[2].x*dst[2].x;
+  A->val[iftGetMatrixIndex(A,6,5)] = -src[2].x*dst[2].y;
   A->val[iftGetMatrixIndex(A,7,5)] = -src[2].y*dst[2].y;
 
 
@@ -82,13 +54,15 @@ iftMatrix *iftCorrectionMatrix(iftPoint *src, iftPoint *dst)
   A->val[iftGetMatrixIndex(A,1,6)] = src[3].y;
   A->val[iftGetMatrixIndex(A,2,6)] = 1.0;
   A->val[iftGetMatrixIndex(A,6,6)] = -src[3].x*dst[3].x;
-  A->val[iftGetMatrixIndex(A,7,6)] = -src[3].y*dst[3].y;
+  A->val[iftGetMatrixIndex(A,7,6)] = -src[3].y*dst[3].x;
 
   A->val[iftGetMatrixIndex(A,3,7)] = src[3].x;
   A->val[iftGetMatrixIndex(A,4,7)] = src[3].y;
   A->val[iftGetMatrixIndex(A,5,7)] = 1.0;
-  A->val[iftGetMatrixIndex(A,6,7)] = -src[3].x*dst[3].x;
+  A->val[iftGetMatrixIndex(A,6,7)] = -src[3].x*dst[3].y;
   A->val[iftGetMatrixIndex(A,7,7)] = -src[3].y*dst[3].y;
+
+  iftPrintMatrix(A);
 
   c->val[iftGetMatrixIndex(c,0,0)] = dst[0].x; 
   c->val[iftGetMatrixIndex(c,0,1)] = dst[0].y; 
@@ -121,6 +95,196 @@ iftMatrix *iftCorrectionMatrix(iftPoint *src, iftPoint *dst)
   return(B);
 }
 
+iftImage *iftCorrectImage(iftImage *img, iftPoint *src_pt, iftPoint *dst_pt, int xsize, int ysize)
+{
+  iftImage  *cimg = iftCreateImage(xsize,ysize,1);
+  iftMatrix *T,*InvT, *src = iftCreateMatrix(1,3), *dst=iftCreateMatrix(1,3);
+  iftPoint P;
+  iftVoxel v,u;
+  int q;
+
+  T = iftCameraCalibrationMatrix(src_pt, dst_pt); 
+  iftPrintMatrix(T); 
+
+  InvT = iftInvertMatrix(T);
+
+  v.z = u.z = P.z = 0;
+  for (v.y = 0; v.y < cimg->ysize; v.y++) 
+    for (v.x = 0; v.x < cimg->xsize; v.x++){
+      q    = iftGetVoxelIndex(cimg,v);
+      dst->val[iftGetMatrixIndex(dst,0,0)] = v.x;
+      dst->val[iftGetMatrixIndex(dst,0,1)] = v.y;
+      dst->val[iftGetMatrixIndex(dst,0,2)] = 1;
+      src   = iftMultMatrices(InvT,dst);
+      P.x   = src->val[iftGetMatrixIndex(src,0,0)]/src->val[iftGetMatrixIndex(src,0,2)];
+      P.y   = src->val[iftGetMatrixIndex(src,0,1)]/src->val[iftGetMatrixIndex(src,0,2)];
+      u.x   = ROUND(P.x);
+      u.y   = ROUND(P.y);
+
+      if (iftValidVoxel(img,u)){
+  cimg->val[q] = iftImageValueAtPoint2D(img,P);
+      }
+    }
+  
+  iftDestroyMatrix(&InvT);
+  iftDestroyMatrix(&src);
+  iftDestroyMatrix(&dst);
+  iftDestroyMatrix(&T);
+
+  return(cimg);
+}
+
+iftPoint *iftTheFourPlateCorners(iftImage *plate)
+{
+  iftAdjRel *A = iftCircular(1.0);
+  iftSet *S = iftObjectBorderSet(plate, A), *Saux1, *Saux2;
+  iftPoint *P = (iftPoint *) calloc(4,sizeof(iftPoint));
+
+  iftDestroyAdjRel(&A);
+
+  int dmax = INFINITY_INT_NEG;
+
+  Saux1 = S;
+  while (Saux1 != NULL) {
+    int p1 = Saux1->elem;
+    iftVoxel u1 = iftGetVoxelCoord(plate,p1);
+    Saux2 = Saux1;
+    while (Saux2 != NULL) {
+      int p2 = Saux2->elem;
+      iftVoxel u2 = iftGetVoxelCoord(plate,p2);
+      int dist = iftSquaredVoxelDistance(u1,u2);
+      if (dist > dmax) {
+  P[0].x = u1.x;  
+  P[0].y = u1.y;
+  P[1].x = u2.x;  
+  P[1].y = u2.y;
+  dmax   = dist;
+      } 
+      Saux2 = Saux2->next;
+    }
+    Saux1 = Saux1->next;
+  }
+
+
+  /* Compute the normal vector to P[0]P[1] */
+
+  iftVector N, U; 
+
+  U.z = N.z = 0;
+  U.x = (P[1].x - P[0].x); 
+  U.y = (P[1].y - P[0].y); 
+  U   = iftNormalizeVector(U);
+  N.x = -U.y; N.y = U.x;
+
+  /* Find the two other corners at the positive and negative sides of
+     the line P[0]P[1] */
+
+  float Dmax=INFINITY_FLT_NEG, Dmin=INFINITY_FLT; 
+
+  Saux1 = S;
+  while (Saux1 != NULL) {
+    int p1 = Saux1->elem;
+    iftVoxel  u1 = iftGetVoxelCoord(plate,p1);
+    iftVector V1; 
+    
+    V1.z = 0;
+    V1.x = u1.x - P[0].x;
+    V1.y = u1.y - P[0].y;
+    
+    float dist = iftInnerProduct(V1,N);
+    
+    if (dist < Dmin) {
+  Dmin = dist;
+  P[2].x = u1.x; 
+  P[2].y = u1.y; 
+      }
+    if (dist > Dmax) {
+      Dmax = dist;
+      P[3].x = u1.x; 
+      P[3].y = u1.y; 
+    }
+    Saux1 = Saux1->next;
+  }
+   
+  /* Sort the points in clockwise order */
+
+  iftPoint Pmean; 
+  iftPoint *Q = (iftPoint *) calloc(4,sizeof(iftPoint));
+  
+  Pmean.x = (P[0].x + P[1].x + P[2].x + P[3].x)/4.0;
+  Pmean.y = (P[0].y + P[1].y + P[2].y + P[3].y)/4.0;
+  Pmean.z = 0;
+
+  for (int i=0; i < 4; i++) {
+    if ((P[i].x < Pmean.x)&&(P[i].y < Pmean.y)){
+      Q[0].x = P[i].x;
+      Q[0].y = P[i].y;
+    }
+    if ((P[i].x > Pmean.x)&&(P[i].y < Pmean.y)){
+      Q[1].x = P[i].x;
+      Q[1].y = P[i].y;
+    }
+    if ((P[i].x > Pmean.x)&&(P[i].y > Pmean.y)){
+      Q[2].x = P[i].x;
+      Q[2].y = P[i].y;
+    }
+    if ((P[i].x < Pmean.x)&&(P[i].y > Pmean.y)){
+      Q[3].x = P[i].x;
+      Q[3].y = P[i].y;
+    }      
+  }
+
+  printf("Four corners: ");
+  for (int i=0; i < 4; i++){ 
+    printf("(%f,%f) ",Q[i].x,Q[i].y);
+  }
+  printf("\n");
+
+  free(P);
+  iftDestroySet(&S);
+  return(Q);
+}
+
+iftImage *iftPlateWatershed(iftImage *orig, iftImage *candidate)
+{
+  iftSet   *S=NULL;
+  iftImage *aux1 = iftErodeBin(candidate,&S,5); 
+  iftDestroySet(&S);
+  iftImage *aux2 = iftDilateBin(candidate,&S,5); 
+  iftLabeledSet *seed=NULL;
+
+  for (int p=0; p < aux1->n; p++) {
+    if (aux1->val[p]!=0)
+      iftInsertLabeledSet(&seed,p,255); 
+    if (aux2->val[p]==0)
+      iftInsertLabeledSet(&seed,p,0); 
+  }
+  iftAdjRel *B     = iftCircular(1.5);
+  iftImage *basins = iftSobelGradientMagnitude(orig);
+  iftImage *label   = iftWatershed(basins, B, seed);
+
+  iftDestroyImage(&aux1);
+  iftDestroyImage(&aux2);
+  iftDestroyImage(&basins);
+  iftDestroyLabeledSet(&seed);
+
+  return(label);
+}
+
+iftImage *iftSharpPlateCorners(iftImage *plate)
+{
+  iftAdjRel *A1   = iftRectangular(9,9);
+  iftAdjRel *A2   = iftRectangular(11,11);
+  iftImage  *ero  = iftErode(plate,A1);
+  iftImage  *dil  = iftDilate(ero,A2);
+
+  iftWriteImageP2(dil,"teste.pgm");
+
+  iftDestroyImage(&ero);
+  iftDestroyAdjRel(&A1);
+  iftDestroyAdjRel(&A2);
+  return(dil);
+}
 
 int main(int argc, char* argv []) {
 
@@ -128,119 +292,39 @@ int main(int argc, char* argv []) {
     iftError("Usage: iftCorrectPlate <orig.pgm> <label.pgm>", argv[0]);
   }
 
-  iftImage   *orig=iftReadImageByExt(argv[1]);
-  iftImage   *label=iftReadImageByExt(argv[2]);
+  iftImage   *orig=iftReadImageP5(argv[1]);
+  iftImage   *label=iftReadImageP5(argv[2]);
 
-  
-  char mainFile[100];
-  sprintf(mainFile, "%s", argv[1]);
+  /* Sharp plate corners */
 
-  char* p = strtok(argv[1], ".");
-
-  char fixedImgFile[100];
-  sprintf(fixedImgFile, "%s_fixed_orientation_plate.pgm", p);
-
-  /* Extract plate mask and find the rotation by PCA */
-
-  iftVoxel    pos;
-  iftImage   *plate=iftExtractObject(label,1,&pos);
-  iftMatrix  *T = iftObjectAlignMatrixByPCA(plate);
-
+  iftImage *aux = iftPlateWatershed(orig,label);
   iftDestroyImage(&label);
-  label = iftTransformImage(plate,T);
+  label  = iftSharpPlateCorners(aux);
+  iftDestroyImage(&aux);
 
-  /* Extract the same ROI from the original image */
- 
-  iftVoxel    end;
-  end.x = pos.x + plate->xsize - 1;
-  end.y = pos.y + plate->ysize - 1;
-  end.z = 0;
-  iftImage   *roi=iftExtractROI(orig,pos,end);
+  /* Find the four corners */
 
- /* Apply rotation correction */
+  iftPoint *src = iftTheFourPlateCorners(label);
+  iftPoint *dst = (iftPoint *) calloc(4,sizeof(iftPoint));
 
+  dst[0].x = 0;
+  dst[0].y = 0;
+  dst[1].x = 199;
+  dst[1].y = 0;
+  dst[2].x = 199;
+  dst[2].y = 59;
+  dst[3].x = 0;
+  dst[3].y = 59;
+  
+  iftImage *cimg = iftCorrectImage(orig,src,dst,200,60);
+
+  /* aux = iftHBasins(cimg,250); */
+  /* iftWriteImageP5(aux,"teste.pgm"); */
+
+  iftWriteImageP5(cimg,"aligned.pgm");
   iftDestroyImage(&orig);
-  orig  = iftTransformImage(roi,T);    
-  iftDestroyMatrix(&T);
-  iftDestroyImage(&roi);
-
- 
-  /* new function */
-
-  /* iftPoint *src = (iftPoint *) calloc(4,sizeof(iftPoint)); */
-  /* iftPoint *dst = (iftPoint *) calloc(4,sizeof(iftPoint)); */
-  
-  /* src[0].x = 150; */
-  /* src[0].y = 150; */
-  /* src[1].x = 237; */
-  /* src[1].y = 160; */
-  /* src[2].x = 243; */
-  /* src[2].y = 192; */
-  /* src[3].x = 152; */
-  /* src[3].y = 176; */
-
-  /* dst[0].x = 0; */
-  /* dst[0].y = 0; */
-  /* dst[1].x = 100; */
-  /* dst[1].y = 0; */
-  /* dst[2].x = 100; */
-  /* dst[2].y = 25; */
-  /* dst[3].x = 0; */
-  /* dst[3].y = 25; */
-  
-  /* T = iftCorrectionMatrix(src, dst); */
-  /* iftPrintMatrix(T); */
-
-  /* exit(0); */
-
-  /* Apply shear correction and find the final ROI */
-
-  iftImage *origc;
-  iftVoxel v;
-  iftVoxel vo, vf, u;
-
-  origc  = iftCreateImage(orig->xsize,orig->ysize,orig->zsize);
-
-  u.z = v.z = 0;
-  vo.x = vo.y = INFINITY_INT;
-  vf.x = vf.y = INFINITY_INT_NEG;
-  vo.z = vf.z = 0;
-  for (u.y=0; u.y < label->ysize; u.y++) {
-    v.x = 0;
-    for (u.x=0; u.x < label->xsize; u.x++) {      
-      int p = iftGetVoxelIndex(label,u);
-      if (label->val[p]) {
-	v.y   = u.y;
-	int q = iftGetVoxelIndex(label,v);
-	origc->val[q]  = orig->val[p];
-	if (vo.x > v.x)
-	  vo.x = v.x;
-	if (vo.y > v.y)
-	  vo.y = v.y;
-	if (vf.x < v.x)
-	  vf.x = v.x;
-	if (vf.y < v.y)
-	  vf.y = v.y;
-	v.x++;
-      }
-    }
-  }
-
+  iftDestroyImage(&cimg);
   iftDestroyImage(&label);
-  iftDestroyImage(&orig);
-
-  /* Extract final ROI and scale image to a normalized size */
-
-  iftDestroyImage(&plate);
-  plate = iftExtractROI(origc,vo,vf);
-  iftDestroyImage(&origc);
-  float sx = 200.0/plate->xsize;
-  float sy = 50.0/plate->ysize;
-  origc    = iftScaleImage2D(plate,sx,sy);
-  iftWriteImageP2(origc,fixedImgFile);
-  iftDestroyImage(&plate);
-  iftDestroyImage(&origc);
-
 
   return(0);
 }

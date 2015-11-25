@@ -11,6 +11,15 @@ int main() {
     iftAdjRel *A = iftCircular(1.0);
     iftImage* norm_img = iftNormalizeImage(img, A, 4095);
 
+    iftImage* newImg = cutImg(img, 0, 0, 5, 5);
+    
+    printf("%d\n", newImg->n);
+    printf("%d\n", newImg->xsize);
+    printf("%d\n", newImg->ysize);
+
+    iftImage* gaussx = imgConv(newImg, "gauss_x");
+    iftImage* gaussy = imgConv(newImg, "gauss_y");
+
     iftDestroyImage(&img);
     iftDestroyAdjRel(&A);
 
