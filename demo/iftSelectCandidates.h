@@ -31,154 +31,134 @@ void saveCandidate(char* destFolder, char *filename, iftVoxel v){
 }
 
 
+iftImage *binarizationByNiblack(iftImage *orig){
+
+    iftImage *aux = iftCreateImage(orig->xsize, orig->ysize, orig->zsize);
+
+    iftAdjRel *A = iftRectangular(15, 15);
+
+    iftVoxel centralVoxel;
+
+    int  i,j;
+    for(i = 0; i < orig->xsize; i++){
+	for(j = 0; j < orig->ysize; j++){
+	    centralVoxel.x = i;
+	    centralVoxel.y = j;
+	    centralVoxel.z = 0;
+
+            int T = TNiblack(orig, centralVoxel, A);	
+
+            int coord = iftGetVoxelIndex(orig, centralVoxel);
+            if(orig->val[coord] < T){
+                aux->val[coord] = 4095;                        
+            } else{
+                aux->val[coord] = 0;
+            }    
+	}
+    }
+
+    return aux;
+}
+
+int TNiblack(iftImage *orig, iftVoxel v, iftAdjRel *A){
+
+    int i;
+
+    int validVoxels = 0;
+
+    // Niblack parameters.
+    float k = -0.2;
+        
+    float values[A->n];
+    for(i = 0; i < A->n; i++){
+	values[i] = -1;
+    }
+
+
+    for(i = 0; i < A->n; i++){
+        iftVoxel aux = iftGetAdjacentVoxel(A, v, i);
+
+        if(iftValidVoxel(orig, aux) == 1){
+            validVoxels++;
+            int coord = iftGetVoxelIndex(orig, aux);
+            values[i] = orig->val[coord];
+        } 
+    }
+
+
+    float mean = iftMeanFloatArray(values, validVoxels);
+    float stdDev = iftStddevFloatArray(values, validVoxels);   
+                
+    int T = mean + k * stdDev; 
+
+    return T;
+}
+
 
 iftImage *binarizationBySauvola(iftImage *orig){
-    
-    iftImage *aux;
-    int arrayIndex = 0;
-    
-    iftVoxel v;
-    v.x = 0;
-    v.y = 0;
-    v.z = 0;
-        
-    int tileSize = 8; // Common to 352(xsize) and 240(ysize).
-    int numWindowsX = orig->xsize/tileSize;
-    int numWindowsY = orig->ysize/tileSize;
-    
+
+    iftImage *aux = iftCreateImage(orig->xsize, orig->ysize, orig->zsize);
+
+    iftAdjRel *A = iftRectangular(15, 15);
+
+    iftVoxel centralVoxel;
+
+    int  i,j;
+    for(i = 0; i < orig->xsize; i++){
+	for(j = 0; j < orig->ysize; j++){
+	    centralVoxel.x = i;
+	    centralVoxel.y = j;
+	    centralVoxel.z = 0;
+
+            int T = TSauvola(orig, centralVoxel, A);	
+
+            int coord = iftGetVoxelIndex(orig, centralVoxel);
+            if(orig->val[coord] < T){
+                aux->val[coord] = 4095;                        
+            } else{
+                aux->val[coord] = 0;
+            }    
+	}
+    }
+
+    return aux;
+}
+
+int TSauvola(iftImage *orig, iftVoxel v, iftAdjRel *A){
+
+    int i;
+
+    int validVoxels = 0;
+
     // Sauvola parameters.
     int R = 128;
     float k = 0.5;
         
-    // Array that stores pixels' values to compute local threshold.
-    float pixelArray[tileSize*tileSize];
-    
-    // Binarized image.    
-    aux = iftCreateImage(orig->xsize, orig->ysize, orig->zsize);
+    float values[A->n];
+    for(i = 0; i < A->n; i++){
+	values[i] = -1;
+    }
 
-    // Loop to slide window through the image.
-    int xWin;
-    int yWin;
-    for(xWin = 0; xWin < numWindowsX; xWin++){
-        for(yWin = 0; yWin < numWindowsY; yWin++){
-            
-            // Loop to get values of all pixels of the tile.
-            int i;
-            int j;
-            
-            for(i = tileSize*xWin; i < tileSize*(xWin+1); i++){
-                for(j = tileSize*yWin; j < tileSize*(yWin+1); j++){
-                    v.x = i;
-                    v.y = j;
-                    
-                    int coord = iftGetVoxelIndex(orig, v);
-                    pixelArray[arrayIndex] = orig->val[coord];
-                    
-                    arrayIndex++;
-                }                
-            }
-            
-            float mean = iftMeanFloatArray(pixelArray, tileSize*tileSize);
-            float stdDev = iftStddevFloatArray(pixelArray, tileSize*tileSize);   
+
+    for(i = 0; i < A->n; i++){
+        iftVoxel aux = iftGetAdjacentVoxel(A, v, i);
+
+        if(iftValidVoxel(orig, aux) == 1){
+            validVoxels++;
+            int coord = iftGetVoxelIndex(orig, aux);
+            values[i] = orig->val[coord];
+        } 
+    }
+
+
+    float mean = iftMeanFloatArray(values, validVoxels);
+    float stdDev = iftStddevFloatArray(values, validVoxels);   
                 
-            int T = mean * (1 + k * (stdDev/R - 1));  
-                
-            //printf("Threshold: %d\n", T);
-                    
-            arrayIndex = 0;
-            
-            // Binarize image
-            for(i = tileSize*xWin; i < tileSize*(xWin+1); i++){
-                for(j = tileSize*yWin; j < tileSize*(yWin+1); j++){
-                    v.x = i;
-                    v.y = j;
-                    
-                    int coord = iftGetVoxelIndex(orig, v);
-                    if(orig->val[coord] < T){
-                        aux->val[coord] = 4095;                        
-                    } else{
-                        aux->val[coord] = 0;
-                    }                     
-                }                
-            }  
-        }
-    } 
-    
-    return aux;    
+    int T = mean * (1 + k * (stdDev/R - 1));  
+
+    return T;
 }
 
-iftImage *binarizationByNiblack(iftImage *orig){
-    
-    iftImage *aux;
-    int arrayIndex = 0;
-    
-    iftVoxel v;
-    v.x = 0;
-    v.y = 0;
-    v.z = 0;
-        
-    int tileSize = 8; // Common to 352(xsize) and 240(ysize).
-    int numWindowsX = orig->xsize/tileSize;
-    int numWindowsY = orig->ysize/tileSize;
-    
-    // Niblack parameters.
-    float k = -0.2;
-        
-    // Array that stores pixels' values to compute local threshold.
-    float pixelArray[tileSize*tileSize];
-    
-    // Binarized image.    
-    aux = iftCreateImage(orig->xsize, orig->ysize, orig->zsize);
-
-    // Loop to slide window through the image.
-    int xWin;
-    int yWin;
-    for(xWin = 0; xWin < numWindowsX; xWin++){
-        for(yWin = 0; yWin < numWindowsY; yWin++){
-            
-            // Loop to get values of all pixels of the tile.
-            int i;
-            int j;
-            for(i = tileSize*xWin; i < tileSize*(xWin+1); i++){
-                for(j = tileSize*yWin; j < tileSize*(yWin+1); j++){
-                    v.x = i;
-                    v.y = j;
-                    
-                    int coord = iftGetVoxelIndex(orig, v);
-                    pixelArray[arrayIndex] = orig->val[coord];
-                    
-                    arrayIndex++;
-                }                
-            }
-            
-            float mean = iftMeanFloatArray(pixelArray, tileSize*tileSize);
-            float stdDev = iftStddevFloatArray(pixelArray, tileSize*tileSize);   
-                
-            int T = mean + k * stdDev;  
-                
-            //printf("Threshold: %d\n", T);
-                    
-            arrayIndex = 0;
-            
-            // Binarize image
-            for(i = tileSize*xWin; i < tileSize*(xWin+1); i++){
-                for(j = tileSize*yWin; j < tileSize*(yWin+1); j++){
-                    v.x = i;
-                    v.y = j;
-                    
-                    int coord = iftGetVoxelIndex(orig, v);
-                    if(orig->val[coord] < T){
-                        aux->val[coord] = 4095;                        
-                    } else{
-                        aux->val[coord] = 0;
-                    }                     
-                }                
-            }  
-        }
-    } 
-    
-    return aux;    
-}
 
 
 iftImage *computeDenserRegions(char* destFolder, iftVoxel* maxVoxel_1, iftImage *orig, iftImage *plateImage, char *filename){
@@ -346,6 +326,8 @@ iftImage *selectCandidates(iftImage *orig, char* destFolder, char *filename, int
 
         aux[0] = iftThreshold(orig, t, max, 4095);
     }    
+
+    //return aux[0];
     
     
     // Performs Sobel to get responses in the x-axis.

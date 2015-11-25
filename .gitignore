@@ -36,6 +36,7 @@ img/*
 plates/*
 seeds/*
 sgm/*
+demo/basins.c
 
 # ignore Mac files
 *.DS_Store
