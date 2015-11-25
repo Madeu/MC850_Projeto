@@ -15,6 +15,12 @@
 
 #include "iftSegmentation.h"
 
+typedef struct img_candidate {
+    iftImage *candidate;
+    iftVoxel point;
+    int threshold_val;
+}iftCandidate;
+
 void saveCandidate(char* destFolder, char *filename, iftVoxel v){
 	char outfile[100];
 
@@ -180,17 +186,20 @@ iftImage *binarizationByNiblack(iftImage *orig){
     return aux;    
 }
 
+int cmp (const void * a, const void * b)
+{
+  iftCandidate *cand_a = (iftCandidate*) a;
+  iftCandidate *cand_b = (iftCandidate*) b;
 
-iftImage *computeDenserRegions(char* destFolder, iftVoxel* maxVoxel_1, iftImage *orig, iftImage *plateImage, char *filename){
+  return cand_a->threshold_val > cand_b->threshold_val;
+}
+
+iftCandidate computeDenserRegions( iftImage *orig, iftImage *plateImage){
     
-    iftVoxel v;
-    v.x = 0;
-    v.y = 0;
-    v.z = 0;
-    
-    maxVoxel_1->x = 0;
-    maxVoxel_1->y = 0;
-    maxVoxel_1->z = 0;
+    iftVoxel maxVoxel_1;
+    maxVoxel_1.x = 0;
+    maxVoxel_1.y = 0;
+    maxVoxel_1.z = 0;
     
     int xSize = orig->xsize;
     int ySize = orig->ysize;
@@ -204,7 +213,7 @@ iftImage *computeDenserRegions(char* destFolder, iftVoxel* maxVoxel_1, iftImage 
     int stride = 4;
     
     float maxPercentage_1 = 0.0;
-    
+    iftVoxel v;
     int x;
     for(x = startXPixel; x < xSize; x=x+stride){
         
@@ -259,8 +268,8 @@ iftImage *computeDenserRegions(char* destFolder, iftVoxel* maxVoxel_1, iftImage 
                 if(percentage >= maxPercentage_1){
 
                     maxPercentage_1 = percentage;                
-                    maxVoxel_1->x = x;
-                    maxVoxel_1->y = y;
+                    maxVoxel_1.x = x;
+                    maxVoxel_1.y = y;
                 }
             }         
         }
@@ -273,8 +282,8 @@ iftImage *computeDenserRegions(char* destFolder, iftVoxel* maxVoxel_1, iftImage 
     
     int xCoord;
     int yCoord;
-    for(xCoord = maxVoxel_1->x; xCoord < (maxVoxel_1->x + 135); xCoord++){
-        for(yCoord = maxVoxel_1->y; yCoord < (maxVoxel_1->y + 45); yCoord++){
+    for(xCoord = maxVoxel_1.x; xCoord < (maxVoxel_1.x + 135); xCoord++){
+        for(yCoord = maxVoxel_1.y; yCoord < (maxVoxel_1.y + 45); yCoord++){
             v.x = xCoord;
             v.y = yCoord;
                     
@@ -284,100 +293,72 @@ iftImage *computeDenserRegions(char* destFolder, iftVoxel* maxVoxel_1, iftImage 
     }
     
     
-    iftVoxel auxVoxel = *maxVoxel_1;
+    iftVoxel auxVoxel = maxVoxel_1;
     auxVoxel.x = auxVoxel.x + 120;
     auxVoxel.y = auxVoxel.y + 45;
     
-    iftImage *roi = iftExtractROI(plateImage, *maxVoxel_1, auxVoxel);
-    /*iftWriteImageP2(roi, filename);*/
-    //--------------------------------------------------------------------------
-    
-    
-    
-    // Set pixel's value outside plate region to 0.
-    int y;
-    for(x = 0; x < orig->xsize; x++ ){
-        for(y = 0; y < orig->ysize; y++){
-            v.x = x;
-            v.y = y;
-            
-            int coord = iftGetVoxelIndex(orig, v);
-            orig->val[coord] = 0;
-            
-        }
-    }
-    
-    
-    // Set pixel's value inside plate region to 4095.
-    for(xCoord = maxVoxel_1->x; xCoord < (maxVoxel_1->x + tileXSize); xCoord++){
-        for(yCoord = maxVoxel_1->y; yCoord < (maxVoxel_1->y + tileYSize); yCoord++){
-            v.x = xCoord;
-            v.y = yCoord;
-                                
-            int coord = iftGetVoxelIndex(orig, v);
-            orig->val[coord] = 255;
-        }
-    }
+    iftImage *roi = iftExtractROI(plateImage, maxVoxel_1, auxVoxel);
 
-    //saveCandidate(destFolder, filename, *maxVoxel_1);
+    iftCandidate candidate;
+    candidate.candidate = roi;
+    candidate.point = maxVoxel_1;
+    candidate.threshold_val = maxPercentage_1;
 
-    //iftWriteImageP2(orig, filename);
-    
-    return roi;     
+    return candidate;     
 }
 
 
 
-iftImage *selectCandidates(iftImage *orig, char* destFolder, char *filename, int binarizationMethod, int pooling) {
+// iftImage *selectCandidates(iftImage *orig, char* destFolder, char *filename, int binarizationMethod, int pooling) {
    
-    iftAdjRel *A = NULL;  
-    iftKernel *Kx = NULL;
+//     iftAdjRel *A = NULL;  
+//     iftKernel *Kx = NULL;
     
-    iftImage *aux[4];
+//     iftImage *aux[4];
         
-    // Performs image binarization using Sauvola algorithm.
-    if(binarizationMethod == 0){
-        aux[0] = binarizationBySauvola(orig);
-    } else if(binarizationMethod == 1){
-        aux[0] = binarizationByNiblack(orig);
-    } else {
-        int t = iftOtsu(orig);
-        int max = iftMaximumValue(orig);
+//     // Performs image binarization using Sauvola algorithm.
+//     if(binarizationMethod == 0){
+//         aux[0] = binarizationBySauvola(orig);
+//     } else if(binarizationMethod == 1){
+//         aux[0] = binarizationByNiblack(orig);
+//     } else {
+//         int t = iftOtsu(orig);
+//         int max = iftMaximumValue(orig);
 
-        aux[0] = iftThreshold(orig, t, max, 4095);
-    }    
+//         aux[0] = iftThreshold(orig, t, max, 4095);
+//     }    
     
     
-    // Performs Sobel to get responses in the x-axis.
-    Kx = iftSobelXKernel2D();
-    aux[1] = iftFastLinearFilter(aux[0], Kx, 0);
-    aux[2] = iftAbs(aux[1]);    
+//     // Performs Sobel to get responses in the x-axis.
+//     Kx = iftSobelXKernel2D();
+//     aux[1] = iftFastLinearFilter(aux[0], Kx, 0);
+//     aux[2] = iftAbs(aux[1]);    
     
-    iftDestroyImage(&aux[0]);
-    iftDestroyImage(&aux[1]);
+//     iftDestroyImage(&aux[0]);
+//     iftDestroyImage(&aux[1]);
     
-    // Performs image open operator.    
-    A = iftCircular(1.0);
-    aux[3] = iftOpen(aux[2], A);
-    iftDestroyImage(&aux[2]);
-    iftVoxel v;
+//     // Performs image open operator.    
+//     A = iftCircular(1.0);
+//     aux[3] = iftOpen(aux[2], A);
+//     iftDestroyImage(&aux[2]);
+//     iftVoxel v;
 
-    if(pooling == 1){
-        // Performs pooling.
-        aux[4] = iftAlphaPooling(aux[3], A, 4, 2);  
+//     if(pooling == 1){
+//         // Performs pooling.
+//         aux[4] = iftAlphaPooling(aux[3], A, 4, 2);  
 
-        // Finds region with high number of white pixels.
-        aux[0] = computeDenserRegions(destFolder, &v, aux[4], orig, filename);      
-    } else{
-        // Finds region with high number of white pixels.
-        aux[0] = computeDenserRegions(destFolder, &v, aux[3], orig, filename);
-    }
+//         // Finds region with high number of white pixels.
+//         aux[0] = computeDenserRegions(destFolder, &v, aux[4], orig, filename);      
+//     } else{
+//         // Finds region with high number of white pixels.
+//         aux[0] = computeDenserRegions(destFolder, &v, aux[3], orig, filename);
+//     }
 
-    iftDestroyImage(&aux[3]); 
-    iftDestroyAdjRel(&A);
-    iftDestroyKernel(&Kx);    
+//     iftDestroyImage(&aux[3]); 
+//     iftDestroyAdjRel(&A);
+//     iftDestroyKernel(&Kx);    
     
-    return aux[0];   
-}
+//     return aux[0];   
+// }
 
 #endif //IFT_IFTSELECTCANDIDATES_H
