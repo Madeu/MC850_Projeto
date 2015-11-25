@@ -188,6 +188,30 @@ iftVoxel getBigCenter(iftImage* img ,int harris_number, int num_centers){
 	return voxel;
 }
 
+iftImage *drawLabelGen(iftImage *img, iftVoxel center, int delta_x, int delta_y) {
+	iftImage *marker = iftCreateImage(img->xsize, img->ysize, 1);
+
+	iftVoxel aux;
+
+	int x, y;	
+	for(x = -delta_x; x < delta_x; x++){
+		for(y = -delta_y; y < delta_y; y++){
+			aux.x = center.x+x;
+			aux.y = center.y+y;
+			aux.z = center.z;
+
+			if(iftValidVoxel(img, aux)) {
+				int coord = iftGetVoxelIndex(marker, aux);
+		        marker->val[coord] = 255;
+			}
+	
+		}
+	}
+
+	return marker;
+}
+
+
 void writeSeedFile(char *filename, iftVoxel v){
 	char seedsFilename[100];
 	char origFilename[100];

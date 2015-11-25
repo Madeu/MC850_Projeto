@@ -181,17 +181,16 @@ iftImage *binarizationByNiblack(iftImage *orig){
 }
 
 
-iftImage *computeDenserRegions(char* destFolder, iftImage *orig, iftImage *plateImage, char *filename){
+iftImage *computeDenserRegions(char* destFolder, iftVoxel* maxVoxel_1, iftImage *orig, iftImage *plateImage, char *filename){
     
     iftVoxel v;
     v.x = 0;
     v.y = 0;
     v.z = 0;
     
-    iftVoxel maxVoxel_1;
-    maxVoxel_1.x = 0;
-    maxVoxel_1.y = 0;
-    maxVoxel_1.z = 0;
+    maxVoxel_1->x = 0;
+    maxVoxel_1->y = 0;
+    maxVoxel_1->z = 0;
     
     int xSize = orig->xsize;
     int ySize = orig->ysize;
@@ -260,8 +259,8 @@ iftImage *computeDenserRegions(char* destFolder, iftImage *orig, iftImage *plate
                 if(percentage >= maxPercentage_1){
 
                     maxPercentage_1 = percentage;                
-                    maxVoxel_1.x = x;
-                    maxVoxel_1.y = y;
+                    maxVoxel_1->x = x;
+                    maxVoxel_1->y = y;
                 }
             }         
         }
@@ -274,8 +273,8 @@ iftImage *computeDenserRegions(char* destFolder, iftImage *orig, iftImage *plate
     
     int xCoord;
     int yCoord;
-    for(xCoord = maxVoxel_1.x; xCoord < (maxVoxel_1.x + 135); xCoord++){
-        for(yCoord = maxVoxel_1.y; yCoord < (maxVoxel_1.y + 45); yCoord++){
+    for(xCoord = maxVoxel_1->x; xCoord < (maxVoxel_1->x + 135); xCoord++){
+        for(yCoord = maxVoxel_1->y; yCoord < (maxVoxel_1->y + 45); yCoord++){
             v.x = xCoord;
             v.y = yCoord;
                     
@@ -285,11 +284,11 @@ iftImage *computeDenserRegions(char* destFolder, iftImage *orig, iftImage *plate
     }
     
     
-    iftVoxel auxVoxel = maxVoxel_1;
+    iftVoxel auxVoxel = *maxVoxel_1;
     auxVoxel.x = auxVoxel.x + 120;
     auxVoxel.y = auxVoxel.y + 45;
     
-    iftImage *roi = iftExtractROI(plateImage, maxVoxel_1, auxVoxel);
+    iftImage *roi = iftExtractROI(plateImage, *maxVoxel_1, auxVoxel);
     /*iftWriteImageP2(roi, filename);*/
     //--------------------------------------------------------------------------
     
@@ -310,8 +309,8 @@ iftImage *computeDenserRegions(char* destFolder, iftImage *orig, iftImage *plate
     
     
     // Set pixel's value inside plate region to 4095.
-    for(xCoord = maxVoxel_1.x; xCoord < (maxVoxel_1.x + tileXSize); xCoord++){
-        for(yCoord = maxVoxel_1.y; yCoord < (maxVoxel_1.y + tileYSize); yCoord++){
+    for(xCoord = maxVoxel_1->x; xCoord < (maxVoxel_1->x + tileXSize); xCoord++){
+        for(yCoord = maxVoxel_1->y; yCoord < (maxVoxel_1->y + tileYSize); yCoord++){
             v.x = xCoord;
             v.y = yCoord;
                                 
@@ -320,7 +319,7 @@ iftImage *computeDenserRegions(char* destFolder, iftImage *orig, iftImage *plate
         }
     }
 
-    saveCandidate(destFolder, filename, maxVoxel_1);
+    //saveCandidate(destFolder, filename, *maxVoxel_1);
 
     //iftWriteImageP2(orig, filename);
     
@@ -361,16 +360,17 @@ iftImage *selectCandidates(iftImage *orig, char* destFolder, char *filename, int
     A = iftCircular(1.0);
     aux[3] = iftOpen(aux[2], A);
     iftDestroyImage(&aux[2]);
-    
+    iftVoxel v;
+
     if(pooling == 1){
         // Performs pooling.
         aux[4] = iftAlphaPooling(aux[3], A, 4, 2);  
 
         // Finds region with high number of white pixels.
-        aux[0] = computeDenserRegions(destFolder, aux[4], orig, filename);      
+        aux[0] = computeDenserRegions(destFolder, &v, aux[4], orig, filename);      
     } else{
         // Finds region with high number of white pixels.
-        aux[0] = computeDenserRegions(destFolder, aux[3], orig, filename);
+        aux[0] = computeDenserRegions(destFolder, &v, aux[3], orig, filename);
     }
 
     iftDestroyImage(&aux[3]); 
