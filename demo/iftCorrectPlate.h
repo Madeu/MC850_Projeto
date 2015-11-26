@@ -269,8 +269,8 @@ iftImage *getCorrectedImage(iftImage *orig, iftImage *candidate, iftVoxel cand_p
     center.x += cand_pos.x;
     center.y += cand_pos.y;
 
-    iftImage* labelTrue = drawLabelGen(orig, center, 20, 10);
-    iftImage* labelFalse = drawLabelGen(orig, center, 85, 36);
+    iftImage* labelTrue = drawLabelGen(orig, center, 8, 5);
+    iftImage* labelFalse = drawLabelGen(orig, center, 80, 30);
 
     iftImage *label = iftPlateWatershed(orig, labelTrue, labelFalse);
     iftImage *watershed_img = iftSharpPlateCorners(label);
