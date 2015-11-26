@@ -174,7 +174,7 @@ iftCandidate *computeDenserRegions(iftImage *orig, iftImage *plateImage) {
 	maxVoxel_1.y = 0;
 	maxVoxel_1.z = 0;
 
-	int threshold = 5;
+	int threshold = 30;
 
 	iftCandidate *candidates = (iftCandidate *) malloc(threshold * sizeof(iftCandidate));
 	for(int i = 0; i < threshold; i++) {
