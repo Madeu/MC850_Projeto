@@ -3,7 +3,7 @@
 #include "iftSegmentation.h"
 #include "iftCorrectPlate.h"
 
-iftCandidate selectCandidate(iftImage *orig) {
+iftCandidate *selectCandidate(iftImage *orig) {
 	/* Sauvoula binarization to shape letters*/
 	iftImage* sauv = binarizationBySauvola(orig);
 
@@ -21,26 +21,44 @@ iftCandidate selectCandidate(iftImage *orig) {
 	iftDestroyImage(&sob_abs);
 	iftDestroyAdjRel(&A);
 
-	iftCandidate candidate = computeDenserRegions(filter_img, orig);
+	iftCandidate *candidates = computeDenserRegions(filter_img, orig);
 	iftDestroyImage(&filter_img);
 
-	return candidate;
+	return candidates;
+}
+
+void segmentCandidates(iftCandidate *cand, iftImage *img, const char *name) {
+	char str[80];
+
+
+	
 }
 
 int main(int argc, char const *argv[])
 {
+	char str[80];
+
 	if (argc < 3) {
 		printf("usage:\n\t %s <img_source> <img _dest>\n", argv[0]);
 		exit(1);
 	}
 	iftImage *orig = iftReadImageByExt(argv[1]);
 
-	iftCandidate cand = selectCandidate(orig);
+	iftCandidate *cand = selectCandidate(orig);
 
-	iftWriteImageP2(cand.candidate, argv[2]);
+	for (int i = 0; i < 5; i++) {
+		iftImage *plate = getCorrectedImage(orig, cand[i].candidate, cand[i].point);
+		sprintf(str, "%s-%d", argv[2], i);
+		iftWriteImageP5(plate, str);
+
+		iftDestroyImage(&plate);
+	}
 
 	iftDestroyImage(&orig);
-	iftDestroyImage(&(cand.candidate));
+	for (int i = 0; i < 5; i++) {
+		iftDestroyImage(&(cand[i].candidate));
+	}
+	free(cand);
 
 	return 0;
 }

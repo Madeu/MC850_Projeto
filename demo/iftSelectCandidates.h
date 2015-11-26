@@ -17,7 +17,7 @@
 typedef struct img_candidate {
 	iftImage *candidate;
 	iftVoxel point;
-	int threshold_val;
+	float threshold_val;
 } iftCandidate;
 
 void saveCandidate(char* destFolder, char *filename, iftVoxel v) {
@@ -167,7 +167,7 @@ int cmp(const void * a, const void * b) {
 	return cand_a->threshold_val > cand_b->threshold_val;
 }
 
-iftCandidate computeDenserRegions(iftImage *orig, iftImage *plateImage) {
+iftCandidate *computeDenserRegions(iftImage *orig, iftImage *plateImage) {
 
 	iftVoxel maxVoxel_1;
 	maxVoxel_1.x = 0;
@@ -176,11 +176,14 @@ iftCandidate computeDenserRegions(iftImage *orig, iftImage *plateImage) {
 
 	int threshold = 5;
 
-	printf("Teste\n");
+	iftCandidate *candidates = (iftCandidate *) malloc(threshold * sizeof(iftCandidate));
+	for(int i = 0; i < threshold; i++) {
+		candidates[i].point.x = 0;
+		candidates[i].point.y = 0;
+		candidates[i].point.z = 0;
+		candidates[i].threshold_val = 0.0;
+	}
 
-	iftCandidate candidates[5];
-
-	printf("Teste2\n");
 
 	int xSize = orig->xsize;
 	int ySize = orig->ysize;
@@ -250,10 +253,12 @@ iftCandidate computeDenserRegions(iftImage *orig, iftImage *plateImage) {
 
 			if (y >= orig->ysize / 2) {
 				if (percentage >= maxPercentage_1) {
-
 					maxPercentage_1 = percentage;
 					maxVoxel_1.x = x;
 					maxVoxel_1.y = y;
+					candidates[0].point = maxVoxel_1;
+					candidates[0].threshold_val = maxPercentage_1;
+					qsort(candidates, threshold, sizeof(iftCandidate), cmp);
 				}
 			}
 		}
@@ -263,30 +268,29 @@ iftCandidate computeDenserRegions(iftImage *orig, iftImage *plateImage) {
 	// Saves selected region.
 	iftImage *teste = iftCreateImage(orig->xsize, orig->ysize, orig->zsize);
 
-	int xCoord;
-	int yCoord;
-	for (xCoord = maxVoxel_1.x; xCoord < (maxVoxel_1.x + 135); xCoord++) {
-		for (yCoord = maxVoxel_1.y; yCoord < (maxVoxel_1.y + 45); yCoord++) {
-			v.x = xCoord;
-			v.y = yCoord;
+	for(int i = 0; i < threshold; i++) {
+		int xCoord;
+		int yCoord;
+		for (xCoord = candidates[i].point.x; xCoord < (candidates[i].point.x + 135); xCoord++) {
+			for (yCoord = candidates[i].point.y; yCoord < (candidates[i].point.y + 45); yCoord++) {
+				v.x = xCoord;
+				v.y = yCoord;
 
-			int coord = iftGetVoxelIndex(plateImage, v);
-			teste->val[coord] = plateImage->val[coord];
+				int coord = iftGetVoxelIndex(plateImage, v);
+				teste->val[coord] = plateImage->val[coord];
+			}
 		}
+
+		iftVoxel auxVoxel = candidates[i].point;
+		auxVoxel.x = auxVoxel.x + 120;
+		auxVoxel.y = auxVoxel.y + 45;
+
+		candidates[i].candidate = iftExtractROI(plateImage, candidates[i].point, auxVoxel);
 	}
 
-	iftVoxel auxVoxel = maxVoxel_1;
-	auxVoxel.x = auxVoxel.x + 120;
-	auxVoxel.y = auxVoxel.y + 45;
+	
 
-	iftImage *roi = iftExtractROI(plateImage, maxVoxel_1, auxVoxel);
-
-	iftCandidate candidate;
-	candidate.candidate = roi;
-	candidate.point = maxVoxel_1;
-	candidate.threshold_val = maxPercentage_1;
-
-	return candidate;
+	return candidates;
 }
 
 // iftImage *selectCandidates(iftImage *orig, char* destFolder, char *filename, int binarizationMethod, int pooling) {
