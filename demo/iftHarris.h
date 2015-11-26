@@ -18,7 +18,7 @@
  * @param[out]	gradX		gradient magnitude in x.
  * @param[out]	gradY		gradient magnitude in y.
  */
-void gradient(iftImage *img, iftImage **gradX, iftImage **gradY);
+void harris_gradient(iftImage *img, iftImage **gradX, iftImage **gradY);
 
 /**
  * Calculates Harris Corners detector.
@@ -31,7 +31,7 @@ void iftHarris(iftImage *img, float threshold, iftImage **corners, iftVoxel *cor
 /**================================================================================**/
 /**================================================================================**/
 
-void gradient(iftImage *img, iftImage **gradX, iftImage **gradY) {
+void harris_gradient(iftImage *img, iftImage **gradX, iftImage **gradY) {
 	iftVoxel v;
 	iftVoxel u;
 	float r = 5.0;
@@ -115,7 +115,7 @@ void iftHarris(iftImage *img, float threshold, iftImage **corners, iftVoxel *cor
 	int current;
 	int voxelId = 0;
 
-	gradient(img, &gx, &gy);
+	harris_gradient(img, &gx, &gy);
 
 	aux[0] = iftMult(gx, gx);
 	aux[1] = iftMult(gy, gy);
