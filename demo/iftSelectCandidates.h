@@ -36,6 +36,39 @@ void saveCandidate(char* destFolder, char *filename, iftVoxel v){
 
 }
 
+int TNiblack(iftImage *orig, iftVoxel v, iftAdjRel *A){
+
+    int i;
+
+    int validVoxels = 0;
+
+    // Niblack parameters.
+    float k = -0.2;
+        
+    float values[A->n];
+    for(i = 0; i < A->n; i++){
+    values[i] = -1;
+    }
+
+
+    for(i = 0; i < A->n; i++){
+        iftVoxel aux = iftGetAdjacentVoxel(A, v, i);
+
+        if(iftValidVoxel(orig, aux) == 1){
+            validVoxels++;
+            int coord = iftGetVoxelIndex(orig, aux);
+            values[i] = orig->val[coord];
+        } 
+    }
+
+
+    float mean = iftMeanFloatArray(values, validVoxels);
+    float stdDev = iftStddevFloatArray(values, validVoxels);   
+                
+    int T = mean + k * stdDev; 
+
+    return T;
+}
 
 iftImage *binarizationByNiblack(iftImage *orig){
 
@@ -66,70 +99,6 @@ iftImage *binarizationByNiblack(iftImage *orig){
     return aux;
 }
 
-int TNiblack(iftImage *orig, iftVoxel v, iftAdjRel *A){
-
-    int i;
-
-    int validVoxels = 0;
-
-    // Niblack parameters.
-    float k = -0.2;
-        
-    float values[A->n];
-    for(i = 0; i < A->n; i++){
-	values[i] = -1;
-    }
-
-
-    for(i = 0; i < A->n; i++){
-        iftVoxel aux = iftGetAdjacentVoxel(A, v, i);
-
-        if(iftValidVoxel(orig, aux) == 1){
-            validVoxels++;
-            int coord = iftGetVoxelIndex(orig, aux);
-            values[i] = orig->val[coord];
-        } 
-    }
-
-
-    float mean = iftMeanFloatArray(values, validVoxels);
-    float stdDev = iftStddevFloatArray(values, validVoxels);   
-                
-    int T = mean + k * stdDev; 
-
-    return T;
-}
-
-
-iftImage *binarizationBySauvola(iftImage *orig){
-
-    iftImage *aux = iftCreateImage(orig->xsize, orig->ysize, orig->zsize);
-
-    iftAdjRel *A = iftRectangular(15, 15);
-
-    iftVoxel centralVoxel;
-
-    int  i,j;
-    for(i = 0; i < orig->xsize; i++){
-	for(j = 0; j < orig->ysize; j++){
-	    centralVoxel.x = i;
-	    centralVoxel.y = j;
-	    centralVoxel.z = 0;
-
-            int T = TSauvola(orig, centralVoxel, A);	
-
-            int coord = iftGetVoxelIndex(orig, centralVoxel);
-            if(orig->val[coord] < T){
-                aux->val[coord] = 4095;                        
-            } else{
-                aux->val[coord] = 0;
-            }    
-	}
-    }
-
-    return aux;
-}
-
 int TSauvola(iftImage *orig, iftVoxel v, iftAdjRel *A){
 
     int i;
@@ -142,7 +111,7 @@ int TSauvola(iftImage *orig, iftVoxel v, iftAdjRel *A){
         
     float values[A->n];
     for(i = 0; i < A->n; i++){
-	values[i] = -1;
+    values[i] = -1;
     }
 
 
@@ -165,6 +134,38 @@ int TSauvola(iftImage *orig, iftVoxel v, iftAdjRel *A){
     return T;
 }
 
+
+iftImage *binarizationBySauvola(iftImage *orig){
+
+    iftImage *aux = iftCreateImage(orig->xsize, orig->ysize, orig->zsize);
+
+    iftAdjRel *A = iftRectangular(15, 15);
+
+    iftVoxel centralVoxel;
+
+    int  i,j;
+    for(i = 0; i < orig->xsize; i++){
+    	for(j = 0; j < orig->ysize; j++){
+    	    centralVoxel.x = i;
+    	    centralVoxel.y = j;
+    	    centralVoxel.z = 0;
+
+                int T = TSauvola(orig, centralVoxel, A);	
+
+                int coord = iftGetVoxelIndex(orig, centralVoxel);
+                if(orig->val[coord] < T){
+                    aux->val[coord] = 4095;                        
+                } else{
+                    aux->val[coord] = 0;
+                }    
+    	}
+    }
+
+    iftDestroyAdjRel(&A);
+    
+    return aux;
+}
+
 int cmp (const void * a, const void * b)
 {
   iftCandidate *cand_a = (iftCandidate*) a;
@@ -180,6 +181,15 @@ iftCandidate computeDenserRegions( iftImage *orig, iftImage *plateImage){
     maxVoxel_1.y = 0;
     maxVoxel_1.z = 0;
     
+    int threshold = 5;
+
+    printf("Teste\n");
+
+    iftCandidate candidates[5];
+
+
+    printf("Teste2\n");
+
     int xSize = orig->xsize;
     int ySize = orig->ysize;
     
@@ -254,7 +264,6 @@ iftCandidate computeDenserRegions( iftImage *orig, iftImage *plateImage){
         }
     }
             
-    
     //--------------------------------------------------------------------------
     // Saves selected region.
     iftImage *teste = iftCreateImage(orig->xsize, orig->ysize, orig->zsize);    

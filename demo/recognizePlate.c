@@ -13,6 +13,7 @@ iftCandidate selectCandidate(iftImage *orig) {
 	iftImage* sob_abs= iftAbs(sob);
 	iftDestroyImage(&sauv);
 	iftDestroyImage(&sob);
+	iftDestroyKernel(&Kx);
 
 	/* Open filter on image to eliminate noize*/
 	iftAdjRel* A = iftCircular(1.0);
