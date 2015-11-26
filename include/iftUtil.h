@@ -4,7 +4,7 @@
  *
  * An example of file management is found in demo/Miscelaneuous/iftPathnames.c
  *
- * @author Samuel Botter
+ * @author Samuel Martins
  */
 
 #ifndef _IFT_UTIL_H_
@@ -323,10 +323,24 @@ void iftRemoveDir(char *pathname);
  *
  *  @author Samuel
  *
- * @patam fp File pointer to the file.
+ * @param fp File pointer to the file.
  * @return 1 if it is directory, 0 otherwise.
  */
 int iftIsFileEmpty(FILE *fp);
+
+
+/**
+ * @brief Reads a FILE as a String.
+ * 
+ * @author Samuel
+ *
+ * Returns the content of a FILE with pathname @pathname in a string.
+ * All the content of the file is stored in an only string.
+ * 
+ * @param pathname Pathname from the FILE to be read. 
+ * @return The FILE content as a String.
+ */
+char *iftReadFileAsString(char *pathname);
 
 
 /**

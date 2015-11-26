@@ -1,6 +1,7 @@
 #include "ift.h"
 #include "iftExtractFeatures.h"
 #include "iftSelectCandidates.h"
+#include "hog.h"
 
 
 int main(int argc, char* argv []) {
@@ -9,7 +10,7 @@ int main(int argc, char* argv []) {
         iftError("Usage: <images folder> <labels folder> <classifier> <output detect folder>", argv[0]);
     }
 
-    iftCplGraph* graph = iftReadCplGraph(argv[3]);
+    iftSVM* svm = iftReadSVM(argv[3]);
 
     iftDir* imgsDir = iftLoadFilesFromDirectory(argv[1], "pgm");
     iftDir* labelsDir = iftLoadFilesFromDirectory(argv[2], "pgm");
@@ -28,21 +29,22 @@ int main(int argc, char* argv []) {
 
     for (int i = 0; i <imgsDir->nfiles; ++i) {
 
-        printf("Image: %s ", imgsDir->files[i]->pathname);
+        printf("%s", imgsDir->files[i]->pathname);
 
         labelImg = iftReadImageByExt(labelsDir->files[i]->pathname);
         origImg = iftReadImageByExt(imgsDir->files[i]->pathname);
         candImg = selectCandidates(origImg);
 
         int numCandidates = iftMaximumValue(candImg);
-        Zt = iftCreateDataSet(numCandidates, DESCRIPTOR_SIZE);
+		Zt = iftCreateDataSet(numCandidates, DESCRIPTOR_SIZE);
+        iftSetStatus(Zt, TEST);
 
         // Select positive and negative examples
         for (int j = 0; j < numCandidates ; j++) {
             // Get bounding box
             iftImage* bb_img = iftCreateBoundingBox2D(origImg, candImg, (j+1));
             // Extract BIC descriptor
-            iftFeatures* feat = iftExtractBIC(bb_img, DESCRIPTOR_SIZE/2);
+            iftFeatures* feat = extractHog(bb_img);
             for (int t = 0; t < feat->n ; t++) {
                 Zt->sample[j].feat[t] = feat->val[t];
                 Zt->sample[j].id = j+1;
@@ -55,7 +57,7 @@ int main(int argc, char* argv []) {
             iftDestroyFeatures(&feat);
         }
 
-        iftClassify(graph, Zt);
+        iftSVMClassifyOVO(svm, Zt, TEST);
 
         float acc = 0.0f;
         int numPixels = 0;
@@ -93,7 +95,7 @@ int main(int argc, char* argv []) {
 
         acc/= numPixels;
 
-        printf("Detection precision: %4.2f\n", acc);
+        printf(";%4.2f\n", acc);
 
         meanAcc += acc/imgsDir->nfiles;
 

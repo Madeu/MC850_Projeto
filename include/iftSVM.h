@@ -74,6 +74,9 @@ iftDataSet *iftKernelizeDataSet2(iftDataSet *Zref,
 int *iftExtractSupportVectorIndices(iftSVM *svm, int idxModel, int *n);
 int **iftExtractAllSupportVectorIndices(iftSVM *svm, int **n);
 
+void iftWriteSVM(iftSVM* svm, const char* filename);
+iftSVM* iftReadSVM(const char *filename);
+
 #ifdef __cplusplus
 }
 #endif

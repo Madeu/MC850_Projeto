@@ -1,5 +1,6 @@
-#IFTFLAGS    = -std=c99 -L../lib -lift -llapack -lblas -lm -I ../include
-IFTFLAGS    = -std=c99 -L /usr/lib64/atlas -L../lib -lift -llapack -ltatlas -lm -I ../include
+IFTFLAGS    = -L../lib -L../libsvm -L /usr/lib64/atlas -lift -llapack -ltatlas -lm -lsvm -lstdc++ -I ../include -I../libsvm
+#IFTFLAGS    = -L../lib -L../libsvm -L /usr/lib64/atlas -lift -llapack -lcblas -lm -lsvm -lstdc++ -I ../include -I../libsvm
+FLAGS = -std=c11 -g -Wall 
 
 all: $@.c
 

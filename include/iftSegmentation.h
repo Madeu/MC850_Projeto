@@ -112,6 +112,9 @@ float iftUnderSegmentation(iftImage *gt_image, iftImage *label_image, float tol_
 float iftUnderSegmentationSLIC2(iftImage *gt_image, iftImage *label_image, float tol_per);
 float iftUnderSegmentationTurbopixel(iftImage *gt_image, iftImage *label_image);
 float iftUnderSegmentationMin(iftImage *gt_image, iftImage *label_image);
+float iftCompactness(iftImage *label);
+float iftTopologyMeasure(iftImage *label);
+
 iftImage *iftSelectAndPropagateRegionsAboveArea(iftImage *label, int area);
 iftImage *iftSmoothRegionsByDiffusion(iftImage *label, iftImage *orig, float smooth_factor, int niters);
 char iftIsSegmentationConsistent(iftImageForest *fst);

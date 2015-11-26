@@ -62,6 +62,7 @@ typedef struct ift_mimage {
 
   iftImage *iftSelectNonBorderVoxels(iftMImage *img, iftImage *mask, int nsamples);
   iftImage *iftGridSampling(iftMImage *img, iftImage *mask, int nsamples);
+  iftImage *iftAltMixedSampling(iftMImage *img, iftImage *mask, int nsamples);
   iftImage *iftSelectNSamplesFromMask(iftMImage *img, iftImage *mask1, int nsamples);
 
   
