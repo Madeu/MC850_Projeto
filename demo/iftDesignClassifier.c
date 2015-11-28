@@ -19,8 +19,8 @@ int main(int argc, char * argv[]) {
         iftSelectSupTrainSamples(Z, TRAIN_PERC);
         iftSVM* svm = iftCreateLinearSVC(1e4);
 
-        iftSVMTrainOVO(svm, Z);
-        iftSVMClassifyOVO(svm, Z, TEST);
+        iftSVMTrainOVA(svm, Z);
+        iftSVMClassifyOVA(svm, Z, TEST);
 
         acc = iftTruePositives(Z);
 

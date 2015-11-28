@@ -53,9 +53,6 @@ int main(int argc, char const *argv[])
 
 	for (int i = 0; i < 30; i++) {
 		iftImage *plate = getCorrectedImage(orig, cand[i].candidate, cand[i].point);
-
-		sprintf(str, "%s-%d", argv[2], i);
-		iftWriteImageP5(plate, str);
 		
 		iftFeatures *feat = hog2(plate);
 
@@ -68,7 +65,7 @@ int main(int argc, char const *argv[])
 		plates[i] = plate;
 	}
 
-	iftSVMClassifyOVO(svm, dataset, TEST);
+	iftSVMClassifyOVA(svm, dataset, TEST);
 
 
 
