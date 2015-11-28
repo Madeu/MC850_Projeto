@@ -1,5 +1,4 @@
 #include "ift.h"
-#include "iftCharRecog.h"
 #include "iftSegmentation.h"
 #include "iftCorrectPlate.h"
 #include "hog2.h"
@@ -66,7 +65,6 @@ int main(int argc, char const *argv[])
 	}
 
 	iftSVMClassifyOVA(svm, dataset, TEST);
-
 
 
 	for (int i = 0; i < 30; i++) {

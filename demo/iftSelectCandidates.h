@@ -266,20 +266,8 @@ iftCandidate *computeDenserRegions(iftImage *orig, iftImage *plateImage) {
 
 	//--------------------------------------------------------------------------
 	// Saves selected region.
-	iftImage *teste = iftCreateImage(orig->xsize, orig->ysize, orig->zsize);
 
 	for(int i = 0; i < threshold; i++) {
-		int xCoord;
-		int yCoord;
-		for (xCoord = candidates[i].point.x; xCoord < (candidates[i].point.x + 135); xCoord++) {
-			for (yCoord = candidates[i].point.y; yCoord < (candidates[i].point.y + 45); yCoord++) {
-				v.x = xCoord;
-				v.y = yCoord;
-
-				int coord = iftGetVoxelIndex(plateImage, v);
-				teste->val[coord] = plateImage->val[coord];
-			}
-		}
 
 		iftVoxel auxVoxel = candidates[i].point;
 		auxVoxel.x = auxVoxel.x + 120;
@@ -287,8 +275,6 @@ iftCandidate *computeDenserRegions(iftImage *orig, iftImage *plateImage) {
 
 		candidates[i].candidate = iftExtractROI(plateImage, candidates[i].point, auxVoxel);
 	}
-
-	
 
 	return candidates;
 }

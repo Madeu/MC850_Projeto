@@ -43,7 +43,6 @@ iftMatrix *iftCameraCalibrationMatrix(iftPoint *src, iftPoint *dst) {
     A->val[iftGetMatrixIndex(A,6,5)] = -src[2].x*dst[2].y;
     A->val[iftGetMatrixIndex(A,7,5)] = -src[2].y*dst[2].y;
 
-
     A->val[iftGetMatrixIndex(A,0,6)] = src[3].x;
     A->val[iftGetMatrixIndex(A,1,6)] = src[3].y;
     A->val[iftGetMatrixIndex(A,2,6)] = 1.0;
@@ -55,8 +54,6 @@ iftMatrix *iftCameraCalibrationMatrix(iftPoint *src, iftPoint *dst) {
     A->val[iftGetMatrixIndex(A,5,7)] = 1.0;
     A->val[iftGetMatrixIndex(A,6,7)] = -src[3].x*dst[3].y;
     A->val[iftGetMatrixIndex(A,7,7)] = -src[3].y*dst[3].y;
-
-    iftPrintMatrix(A);
 
     c->val[iftGetMatrixIndex(c,0,0)] = dst[0].x; 
     c->val[iftGetMatrixIndex(c,0,1)] = dst[0].y; 
