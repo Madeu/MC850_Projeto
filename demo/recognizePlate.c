@@ -1,6 +1,7 @@
 #include "ift.h"
 #include "iftSegmentation.h"
 #include "iftCorrectPlate.h"
+#include "iftSelectCandidates.h"
 #include "hog2.h"
 
 iftCandidate *selectCandidate(iftImage *orig) {
