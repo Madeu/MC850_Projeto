@@ -230,7 +230,7 @@ iftImage *iftCorrectImage(iftImage *img, iftPoint *src_pt, iftPoint *dst_pt, int
     int q;
 
     T = iftCameraCalibrationMatrix(src_pt, dst_pt); 
-    iftPrintMatrix(T); 
+    //iftPrintMatrix(T); 
 
     InvT = iftInvertMatrix(T);
 

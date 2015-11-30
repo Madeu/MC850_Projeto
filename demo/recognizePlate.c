@@ -1,6 +1,7 @@
 #include "ift.h"
 #include "iftSegmentation.h"
 #include "iftCorrectPlate.h"
+#include "iftSelectCandidates.h"
 #include "hog2.h"
 
 iftCandidate *selectCandidate(iftImage *orig) {
@@ -39,7 +40,7 @@ int main(int argc, char const *argv[])
 	int size = 30;
 
 	if (argc < 3) {
-		printf("usage:\n\t %s <img_source> <img _dest> <svm_path>\n", argv[0]);
+		printf("usage:\n\t <img_source> <img _dest> <svm_path>\n");
 		exit(1);
 	}
 	iftImage *orig = iftReadImageByExt(argv[1]);
@@ -69,7 +70,7 @@ int main(int argc, char const *argv[])
 
 	for (int i = 0; i < 30; i++) {
 		if (dataset->sample[i].label == 1) {
-			printf("%d, %f\n", i, dataset->sample[i].weight);
+			//printf("%d, %f\n", i, dataset->sample[i].weight);
 		}
 
 		if (dataset->sample[i].label == 1 && dataset->sample[i].weight > best_weight) {
